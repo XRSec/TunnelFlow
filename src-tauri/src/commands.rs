@@ -251,3 +251,25 @@ pub async fn download_and_install_update(
     let fname = download_url.split('?').next().unwrap_or(&download_url).split("/").last().unwrap_or("update.bin").split("\\").last().unwrap_or("update.bin").to_string();
     crate::updater::download_and_install(app, download_url, fname).await
 }
+
+#[tauri::command]
+pub fn is_mouse_button_down() -> bool {
+    #[cfg(target_os = "macos")]
+    {
+        extern "C" {
+            fn CGEventSourceButtonState(state_id: i32, button: u32) -> bool;
+        }
+        unsafe { CGEventSourceButtonState(0, 0) }
+    }
+    #[cfg(target_os = "windows")]
+    {
+        extern "system" {
+            fn GetAsyncKeyState(v_key: i32) -> i16;
+        }
+        unsafe { (GetAsyncKeyState(0x01) as u16 & 0x8000) != 0 }
+    }
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    {
+        false
+    }
+}

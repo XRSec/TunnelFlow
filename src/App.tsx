@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 
 import { MiniModeView } from "@/components/MiniModeView";
 import { TrayPopoverView } from "@/components/TrayPopoverView";
-import { setWindowMode as apiSetWindowMode } from "@/services/api";
+import { setWindowMode as apiSetWindowMode, isMouseButtonDown } from "@/services/api";
 import { WindowMode } from "@/types/tunnel";
 import { listen } from "@tauri-apps/api/event";
 import {
@@ -128,28 +128,33 @@ export function App() {
       }
     };
 
+    const checkRelease = async () => {
+      if (!isResizingRef.current) return;
+      try {
+        const isDown = await isMouseButtonDown();
+        if (isDown) {
+          resizeTimeoutRef.current = setTimeout(checkRelease, 80);
+          return;
+        }
+      } catch {
+        resizeTimeoutRef.current = setTimeout(checkRelease, 500);
+        return;
+      }
+      performSnap();
+    };
+
     const handleResize = () => {
       setIsResizing(true);
       isResizingRef.current = true;
       isMouseDownRef.current = true;
       setCurrentWidth(window.innerWidth);
-      
-      if (windowMode === "full") {
-        if (window.innerWidth <= 1070) {
-          setIsSidebarCollapsed(prev => {
-            if (!prev) {
-              try { localStorage.setItem("tunnelflow:sidebar_collapsed", "true"); } catch {}
-              return true;
-            }
-            return prev;
-          });
-        }
+
+      if (windowMode === "full" && window.innerWidth <= 1070) {
+        setIsSidebarCollapsed(true);
       }
 
       if (resizeTimeoutRef.current) clearTimeout(resizeTimeoutRef.current);
-      resizeTimeoutRef.current = setTimeout(() => {
-        performSnap();
-      }, 650);
+      resizeTimeoutRef.current = setTimeout(checkRelease, 120);
     };
 
     const handleRelease = () => {

@@ -7,7 +7,7 @@ pub mod tray;
 pub mod updater;
 
 use tauri::{tray::{MouseButtonState, TrayIconBuilder, TrayIconEvent}, Manager, WindowEvent};
-use commands::{check_for_updates, download_and_install_update, play_system_sound, set_window_mode,
+use commands::{is_mouse_button_down, check_for_updates, download_and_install_update, play_system_sound, set_window_mode,
             open_main_window,
             resize_tray_window, resize_mini_window, 
     delete_tunnel, get_groups, get_known_hosts, get_runtime_status, get_tunnels, list_keys, reorder_tunnels,
@@ -44,6 +44,7 @@ pub fn run() {
             play_system_sound,
             set_window_mode,
             open_main_window,
+            is_mouse_button_down,
             resize_tray_window, resize_mini_window,
             check_for_updates,
             download_and_install_update
