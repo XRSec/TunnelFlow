@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">TunnelFlow</title>
+  <desc id="desc">A tunnel with opposing streams representing SSH tunnels and bidirectional port forwarding.</desc>
+  <defs>
+    <linearGradient id="bg" x1="64" y1="24" x2="448" y2="496" gradientUnits="userSpaceOnUse"><stop stop-color="#192B43"/><stop offset="1" stop-color="#080F20"/></linearGradient>
+    <linearGradient id="portal" x1="144" y1="104" x2="368" y2="412" gradientUnits="userSpaceOnUse"><stop stop-color="#7DDFF5"/><stop offset=".48" stop-color="#478AE8"/><stop offset="1" stop-color="#6562D9"/></linearGradient>
+    <linearGradient id="out" x1="94" y1="205" x2="406" y2="205" gradientUnits="userSpaceOnUse"><stop stop-color="#37BDBF"/><stop offset="1" stop-color="#ADFFE8"/></linearGradient>
+    <linearGradient id="in" x1="106" y1="307" x2="418" y2="307" gradientUnits="userSpaceOnUse"><stop stop-color="#91BFFF"/><stop offset="1" stop-color="#4D73EE"/></linearGradient>
+  </defs>
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#bg)"/>
+  <rect x="17" y="17" width="478" height="478" rx="107" stroke="#FFF" stroke-opacity=".08" stroke-width="2"/>
+  <path d="M270 94 352 141Q366 149 366 165V347Q366 363 352 371L270 418Q256 426 242 418L160 371Q146 363 146 347V165Q146 149 160 141L242 94Q256 86 270 94Z" stroke="url(#portal)" stroke-width="22" stroke-linejoin="round"/>
+  <path d="M263 137 315 167Q328 174 328 189V323Q328 338 315 345L263 375Q256 379 249 375L197 345Q184 338 184 323V189Q184 174 197 167L249 137Q256 133 263 137Z" fill="#0A152A" stroke="#74ADF2" stroke-opacity=".22" stroke-width="10"/>
+  <path d="M94 205H408M104 307H418" stroke="#0D192B" stroke-width="52" stroke-linecap="round"/>
+  <path d="M94 205H406" stroke="url(#out)" stroke-width="26" stroke-linecap="round"/>
+  <path d="m372 171 34 34-34 34" stroke="#ADFFE8" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M106 307H418" stroke="url(#in)" stroke-width="26" stroke-linecap="round"/>
+  <path d="m140 273-34 34 34 34" stroke="#91BFFF" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+}
+
+@layer base {
+  :root {
+    --background: 43 30% 97.5%;
+    --foreground: 60 4% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 60 4% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 60 4% 8%;
+    --primary: 15 52% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 40 24% 95%;
+    --secondary-foreground: 60 4% 15%;
+    --muted: 40 24% 95%;
+    --muted-foreground: 40 5% 42%;
+    --accent: 40 24% 92%;
+    --accent-foreground: 60 4% 8%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 38 18% 87%;
+    --input: 38 18% 87%;
+    --ring: 15 52% 58%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 40 6% 12%;
+    --foreground: 40 15% 94%;
+    --card: 40 6% 15%;
+    --card-foreground: 40 15% 94%;
+    --popover: 40 6% 15%;
+    --popover-foreground: 40 15% 94%;
+    --primary: 15 52% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 40 6% 18%;
+    --secondary-foreground: 40 15% 94%;
+    --muted: 40 6% 18%;
+    --muted-foreground: 40 6% 65%;
+    --accent: 40 6% 22%;
+    --accent-foreground: 40 15% 94%;
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 40 6% 24%;
+    --input: 40 6% 24%;
+    --ring: 15 52% 58%;
+  }
+
+  * {
+    border-color: hsl(var(--border) / 0.7);
+  }
+
+  html,
+  body,
+  #root {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Custom Sleek Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(140, 140, 140, 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(140, 140, 140, 0.45);
+}
+
+/* Draggable Region for Custom Titlebar */
+[data-tauri-drag-region] {
+  -webkit-app-region: drag;
+}
+
+button, input, select, textarea, a, .drag-exclude, [data-no-drag] {
+  -webkit-app-region: no-drag;
+}

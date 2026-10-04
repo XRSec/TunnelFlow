@@ -1,0 +1,30 @@
+[package]
+name = "tunnelflow"
+version = "0.1.0"
+description = "TunnelFlow - Cross-platform SSH Tunnel Manager"
+authors = ["xr"]
+edition = "2021"
+
+[lib]
+name = "tunnelflow_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+dirs = "6"
+uuid = { version = "1", features = ["v4", "serde"] }
+regex = "1"
+tokio = { version = "1", features = ["time", "net", "io-util", "rt", "rt-multi-thread", "sync", "macros", "process"] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true
