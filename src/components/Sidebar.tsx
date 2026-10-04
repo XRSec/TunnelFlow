@@ -28,6 +28,8 @@ import { cn } from "@/lib/utils";
 
 import { handleWindowDragOrMaximize, isMacOS } from "@/lib/window";
 
+const DND_TUNNEL_MIME = "application/x-tunnelflow-tunnel";
+
 interface SidebarProps {
   tunnels: Tunnel[];
   groups: GroupDivider[];
@@ -85,6 +87,25 @@ export function Sidebar({
     onMove: (e: MouseEvent) => void;
     onUp: (e: MouseEvent) => void;
   } | null>(null);
+  const dndSessionRef = React.useRef<{
+    tunnelId: string;
+    startY: number;
+    isDragging: boolean;
+    cachedRects?: {
+      type: 'tunnel' | 'group';
+      id: string;
+      top: number;
+      bottom: number;
+      height: number;
+    }[];
+  } | null>(null);
+  const dndListenersRef = React.useRef<{
+    onMove: (e: PointerEvent | MouseEvent) => void;
+    onUp: (e: PointerEvent | MouseEvent) => void;
+  } | null>(null);
+  const hoveredDropRef = React.useRef<{ targetId?: string; position?: "before" | "after"; groupName?: string | null } | null>(null);
+  const justDraggedRef = React.useRef<boolean>(false);
+  const dragTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
@@ -104,6 +125,18 @@ export function Sidebar({
         dragListenersRef.current = null;
         document.body.style.cursor = "";
         document.body.style.userSelect = "";
+      }
+      if (dndListenersRef.current) {
+        window.removeEventListener("pointermove", dndListenersRef.current.onMove as any);
+        window.removeEventListener("mousemove", dndListenersRef.current.onMove as any);
+        window.removeEventListener("pointerup", dndListenersRef.current.onUp as any);
+        window.removeEventListener("mouseup", dndListenersRef.current.onUp as any);
+        dndListenersRef.current = null;
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      }
+      if (dragTimerRef.current) {
+        clearTimeout(dragTimerRef.current);
       }
     };
   }, []);
@@ -190,36 +223,30 @@ export function Sidebar({
   const generalConfig = filteredTunnels.find((t) => t.is_general_config);
   const regularTunnels = filteredTunnels.filter((t) => !t.is_general_config);
 
+  const UNGROUPED_DROP_KEY = "__INTERNAL_UNGROUPED__";
+
   // Group regular tunnels
-  const groupsMap = new Map<string, { name: string, subgroups: Map<string, { name: string, items: Tunnel[] }>, items: Tunnel[] }>();
+  const groupsMap = new Map<string, { name: string, items: Tunnel[] }>();
   const ungrouped: Tunnel[] = [];
+
+  groups.forEach((g) => {
+    if (!groupsMap.has(g.title)) {
+      groupsMap.set(g.title, { name: g.title, items: [] });
+    }
+  });
 
   regularTunnels.forEach((t) => {
     if (t.group) {
-      const parts = t.group.split('/');
-      const parentName = parts[0];
-      
-      if (!groupsMap.has(parentName)) {
-        groupsMap.set(parentName, { name: parentName, subgroups: new Map(), items: [] });
+      if (!groupsMap.has(t.group)) {
+        groupsMap.set(t.group, { name: t.group, items: [] });
       }
-      
-      const parentGroup = groupsMap.get(parentName)!;
-      
-      if (parts.length > 1) {
-        const childName = parts.slice(1).join('/');
-        if (!parentGroup.subgroups.has(childName)) {
-          parentGroup.subgroups.set(childName, { name: childName, items: [] });
-        }
-        parentGroup.subgroups.get(childName)!.items.push(t);
-      } else {
-        parentGroup.items.push(t);
-      }
+      groupsMap.get(t.group)!.items.push(t);
     } else {
       ungrouped.push(t);
     }
   });
 
-  const hierarchicalGroups = Array.from(groupsMap.values());
+  const flatGroups = Array.from(groupsMap.values());
 
   // Calculate live stats
   const connectedCount = Object.values(runtimeStatus).filter(
@@ -243,16 +270,226 @@ export function Sidebar({
 
       <div
         key={tunnel.id}
-        draggable={!tunnel.is_general_config}
-        onDragStart={(e) => {
-          if (tunnel.is_general_config) return;
-          e.dataTransfer.effectAllowed = "move";
-          e.dataTransfer.setData("text/plain", tunnel.id);
-          setDraggedTunnelId(tunnel.id);
+        data-tunnel-id={tunnel.id}
+        onPointerDown={(e) => {
+          if (e.button !== 0 || tunnel.is_general_config) return;
+          if (dndListenersRef.current) {
+            window.removeEventListener("pointermove", dndListenersRef.current.onMove as any);
+            window.removeEventListener("mousemove", dndListenersRef.current.onMove as any);
+            window.removeEventListener("pointerup", dndListenersRef.current.onUp as any);
+            window.removeEventListener("mouseup", dndListenersRef.current.onUp as any);
+            dndListenersRef.current = null;
+          }
+          dndSessionRef.current = { tunnelId: tunnel.id, startY: e.clientY, isDragging: false };
+          const handleMove = (moveEvent: PointerEvent | MouseEvent) => {
+            const session = dndSessionRef.current;
+            if (!session) return;
+            if (!session.isDragging) {
+              if (Math.abs(moveEvent.clientY - session.startY) > 4) {
+                session.isDragging = true;
+                setDraggedTunnelId(session.tunnelId);
+                document.body.style.cursor = "grabbing";
+                document.body.style.userSelect = "none";
+                
+                const cachedRects: { type: 'tunnel' | 'group'; id: string; top: number; bottom: number; height: number; }[] = [];
+                const rows = document.querySelectorAll<HTMLElement>("[data-tunnel-id]");
+                for (let i = 0; i < rows.length; i++) {
+                  const r = rows[i];
+                  const rect = r.getBoundingClientRect();
+                  const tid = r.getAttribute("data-tunnel-id");
+                  if (tid) cachedRects.push({ type: 'tunnel', id: tid, top: rect.top, bottom: rect.bottom, height: rect.height });
+                }
+                const groups = document.querySelectorAll<HTMLElement>("[data-group-name]");
+                for (let i = 0; i < groups.length; i++) {
+                  const g = groups[i];
+                  const rect = g.getBoundingClientRect();
+                  const gname = g.getAttribute("data-group-name");
+                  if (gname) cachedRects.push({ type: 'group', id: gname, top: rect.top, bottom: rect.bottom, height: rect.height });
+                }
+                session.cachedRects = cachedRects;
+              }
+            }
+            if (session.isDragging) {
+              const clientY = moveEvent.clientY;
+              let found = false;
+              if (session.cachedRects) {
+                for (let i = 0; i < session.cachedRects.length; i++) {
+                  const t = session.cachedRects[i];
+                  if (clientY >= t.top && clientY <= t.bottom) {
+                    if (t.type === 'tunnel') {
+                      if (t.id !== session.tunnelId) {
+                        const pos = clientY < t.top + t.height / 2 ? "before" : "after";
+                        hoveredDropRef.current = { targetId: t.id, position: pos };
+                        setDropTarget(prev => (prev?.id === t.id && prev?.position === pos) ? prev : { id: t.id, position: pos });
+                        setDropGroup(null);
+                        found = true;
+                        break;
+                      }
+                    } else {
+                      hoveredDropRef.current = { groupName: t.id };
+                      setDropGroup(prev => prev === t.id ? prev : t.id);
+                      setDropTarget(null);
+                      found = true;
+                      break;
+                    }
+                  }
+                }
+              }
+              if (!found) {
+                hoveredDropRef.current = null;
+                setDropTarget(null);
+                setDropGroup(null);
+              }
+            }
+          };
+          const handleUp = (upEvent: PointerEvent | MouseEvent) => {
+            const session = dndSessionRef.current;
+            const hovered = hoveredDropRef.current;
+            if (session?.isDragging) {
+              justDraggedRef.current = true;
+              if (dragTimerRef.current) clearTimeout(dragTimerRef.current);
+              dragTimerRef.current = setTimeout(() => {
+                justDraggedRef.current = false;
+                dragTimerRef.current = null;
+              }, 100);
+            }
+            if (session?.isDragging && hovered) {
+              if (hovered.targetId && hovered.targetId !== session.tunnelId) {
+                onReorderTunnels?.(session.tunnelId, hovered.targetId, hovered.position!);
+              } else if (hovered.groupName !== undefined) {
+                onMoveToGroup?.(session.tunnelId, hovered.groupName === "__INTERNAL_UNGROUPED__" ? null : hovered.groupName);
+              }
+            }
+            hoveredDropRef.current = null;
+            setDraggedTunnelId(null);
+            setDropTarget(null);
+            setDropGroup(null);
+            dndSessionRef.current = null;
+            if (dndListenersRef.current) {
+              window.removeEventListener("pointermove", dndListenersRef.current.onMove as any);
+              window.removeEventListener("mousemove", dndListenersRef.current.onMove as any);
+              window.removeEventListener("pointerup", dndListenersRef.current.onUp as any);
+              window.removeEventListener("mouseup", dndListenersRef.current.onUp as any);
+              dndListenersRef.current = null;
+            }
+            document.body.style.cursor = "";
+            document.body.style.userSelect = "";
+          };
+          dndListenersRef.current = { onMove: handleMove, onUp: handleUp };
+          window.addEventListener("pointermove", handleMove as any);
+          window.addEventListener("mousemove", handleMove as any);
+          window.addEventListener("pointerup", handleUp as any);
+          window.addEventListener("mouseup", handleUp as any);
         }}
-        onDragEnd={() => {
-          setDraggedTunnelId(null);
-          setDropTarget(null);
+        onMouseDown={(e) => {
+          if (e.button !== 0 || tunnel.is_general_config) return;
+          if (dndListenersRef.current) {
+            window.removeEventListener("pointermove", dndListenersRef.current.onMove as any);
+            window.removeEventListener("mousemove", dndListenersRef.current.onMove as any);
+            window.removeEventListener("pointerup", dndListenersRef.current.onUp as any);
+            window.removeEventListener("mouseup", dndListenersRef.current.onUp as any);
+            dndListenersRef.current = null;
+          }
+          dndSessionRef.current = { tunnelId: tunnel.id, startY: e.clientY, isDragging: false };
+          const handleMove = (moveEvent: PointerEvent | MouseEvent) => {
+            const session = dndSessionRef.current;
+            if (!session) return;
+            if (!session.isDragging) {
+              if (Math.abs(moveEvent.clientY - session.startY) > 4) {
+                session.isDragging = true;
+                setDraggedTunnelId(session.tunnelId);
+                document.body.style.cursor = "grabbing";
+                document.body.style.userSelect = "none";
+                
+                const cachedRects: { type: 'tunnel' | 'group'; id: string; top: number; bottom: number; height: number; }[] = [];
+                const rows = document.querySelectorAll<HTMLElement>("[data-tunnel-id]");
+                for (let i = 0; i < rows.length; i++) {
+                  const r = rows[i];
+                  const rect = r.getBoundingClientRect();
+                  const tid = r.getAttribute("data-tunnel-id");
+                  if (tid) cachedRects.push({ type: 'tunnel', id: tid, top: rect.top, bottom: rect.bottom, height: rect.height });
+                }
+                const groups = document.querySelectorAll<HTMLElement>("[data-group-name]");
+                for (let i = 0; i < groups.length; i++) {
+                  const g = groups[i];
+                  const rect = g.getBoundingClientRect();
+                  const gname = g.getAttribute("data-group-name");
+                  if (gname) cachedRects.push({ type: 'group', id: gname, top: rect.top, bottom: rect.bottom, height: rect.height });
+                }
+                session.cachedRects = cachedRects;
+              }
+            }
+            if (session.isDragging) {
+              const clientY = moveEvent.clientY;
+              let found = false;
+              if (session.cachedRects) {
+                for (let i = 0; i < session.cachedRects.length; i++) {
+                  const t = session.cachedRects[i];
+                  if (clientY >= t.top && clientY <= t.bottom) {
+                    if (t.type === 'tunnel') {
+                      if (t.id !== session.tunnelId) {
+                        const pos = clientY < t.top + t.height / 2 ? "before" : "after";
+                        hoveredDropRef.current = { targetId: t.id, position: pos };
+                        setDropTarget(prev => (prev?.id === t.id && prev?.position === pos) ? prev : { id: t.id, position: pos });
+                        setDropGroup(null);
+                        found = true;
+                        break;
+                      }
+                    } else {
+                      hoveredDropRef.current = { groupName: t.id };
+                      setDropGroup(prev => prev === t.id ? prev : t.id);
+                      setDropTarget(null);
+                      found = true;
+                      break;
+                    }
+                  }
+                }
+              }
+              if (!found) {
+                hoveredDropRef.current = null;
+                setDropTarget(null);
+                setDropGroup(null);
+              }
+            }
+          };
+          const handleUp = (upEvent: PointerEvent | MouseEvent) => {
+            const session = dndSessionRef.current;
+            const hovered = hoveredDropRef.current;
+            if (session?.isDragging) {
+              justDraggedRef.current = true;
+              if (dragTimerRef.current) clearTimeout(dragTimerRef.current);
+              dragTimerRef.current = setTimeout(() => {
+                justDraggedRef.current = false;
+                dragTimerRef.current = null;
+              }, 100);
+            }
+            if (session?.isDragging && hovered) {
+              if (hovered.targetId && hovered.targetId !== session.tunnelId) {
+                onReorderTunnels?.(session.tunnelId, hovered.targetId, hovered.position!);
+              } else if (hovered.groupName !== undefined) {
+                onMoveToGroup?.(session.tunnelId, hovered.groupName === "__INTERNAL_UNGROUPED__" ? null : hovered.groupName);
+              }
+            }
+            hoveredDropRef.current = null;
+            setDraggedTunnelId(null);
+            setDropTarget(null);
+            setDropGroup(null);
+            dndSessionRef.current = null;
+            if (dndListenersRef.current) {
+              window.removeEventListener("pointermove", dndListenersRef.current.onMove as any);
+              window.removeEventListener("mousemove", dndListenersRef.current.onMove as any);
+              window.removeEventListener("pointerup", dndListenersRef.current.onUp as any);
+              window.removeEventListener("mouseup", dndListenersRef.current.onUp as any);
+              dndListenersRef.current = null;
+            }
+            document.body.style.cursor = "";
+            document.body.style.userSelect = "";
+          };
+          dndListenersRef.current = { onMove: handleMove, onUp: handleUp };
+          window.addEventListener("pointermove", handleMove as any);
+          window.addEventListener("mousemove", handleMove as any);
+          window.addEventListener("pointerup", handleUp as any);
+          window.addEventListener("mouseup", handleUp as any);
         }}
         onDoubleClick={() => {
            if (tunnel.is_general_config) return;
@@ -264,32 +501,10 @@ export function Sidebar({
            }
         }}
         title={!activeForwards || activeForwards.length === 0 ? "未配置端口转发，无法启动" : undefined}
-        onDragOver={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (!draggedTunnelId || draggedTunnelId === tunnel.id || tunnel.is_general_config) return;
-          e.dataTransfer.dropEffect = "move";
-          const rect = e.currentTarget.getBoundingClientRect();
-          const y = e.clientY - rect.top;
-          const position = y < rect.height / 2 ? 'before' : 'after';
-          setDropTarget({ id: tunnel.id, position });
+        onClick={() => {
+          if (justDraggedRef.current) return;
+          onSelect(tunnel.id);
         }}
-        onDrop={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          const sourceId = draggedTunnelId || e.dataTransfer.getData("text/plain");
-          if (sourceId && sourceId !== tunnel.id && !tunnel.is_general_config) {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const y = e.clientY - rect.top;
-            const pos = y < rect.height / 2 ? 'before' : 'after';
-            if (onReorderTunnels) {
-              onReorderTunnels(sourceId, tunnel.id, pos);
-            }
-          }
-          setDraggedTunnelId(null);
-          setDropTarget(null);
-        }}
-        onClick={() => onSelect(tunnel.id)}
         onContextMenu={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -301,7 +516,7 @@ export function Sidebar({
           });
         }}
         className={cn(
-          "group flex items-center justify-between gap-1.5 rounded-lg px-1.5 py-2 text-xs transition-all select-none relative",
+          "group flex items-center justify-between gap-1.5 rounded-lg px-1.5 py-2 text-xs transition-all relative",
           !tunnel.is_general_config && "cursor-grab active:cursor-grabbing",
           isSelected
             ? "bg-primary/10 text-primary dark:bg-primary/15 font-medium border-l-2 border-primary"
@@ -436,12 +651,6 @@ export function Sidebar({
       {/* Tunnel List */}
       <div 
         className="flex-1 overflow-y-auto px-2 space-y-2"
-        onDragLeave={(e) => {
-          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-            setDropTarget(null);
-            setDropGroup(null);
-          }
-        }}
       >
         {/* Global Config (Host *) */}
         {generalConfig && (
@@ -472,30 +681,15 @@ export function Sidebar({
         )}
 
         {/* Grouped Tunnels */}
-        {hierarchicalGroups.map((group) => {
+        {flatGroups.map((group) => {
           const isCollapsed = collapsedGroups[group.name];
-          const totalCount = group.items.length + Array.from(group.subgroups.values()).reduce((acc, sub) => acc + sub.items.length, 0);
+          const totalCount = group.items.length;
           
           return (
             <div key={group.name} className="space-y-1 pt-1">
               <div
                 onClick={() => toggleGroupCollapse(group.name)}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (draggedTunnelId) setDropGroup(group.name);
-                }}
-                onDragLeave={() => setDropGroup(null)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  const sourceId = draggedTunnelId || e.dataTransfer.getData("text/plain");
-                  if (sourceId && onMoveToGroup) {
-                    onMoveToGroup(sourceId, group.name);
-                  }
-                  setDraggedTunnelId(null);
-                  setDropGroup(null);
-                }}
+                data-group-name={group.name}
                 className={cn(
                   "flex items-center justify-between px-2 py-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground cursor-pointer transition-colors rounded-sm",
                   dropGroup === group.name ? "bg-primary/10 border border-primary/50 text-foreground" : ""
@@ -516,55 +710,6 @@ export function Sidebar({
               {!isCollapsed && (
                 <div className="space-y-1 pl-1">
                   {group.items.map(renderTunnelItem)}
-                  
-                  {Array.from(group.subgroups.values()).map((subgroup) => {
-                    const subKey = `${group.name}/${subgroup.name}`;
-                    const isSubCollapsed = collapsedGroups[subKey];
-                    return (
-                      <div key={subKey} className="space-y-1 pt-1 pl-2 border-l border-border/40 ml-1">
-                        <div
-                          onClick={() => toggleGroupCollapse(subKey)}
-                          onDragOver={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (draggedTunnelId) setDropGroup(subKey);
-                          }}
-                          onDragLeave={() => setDropGroup(null)}
-                          onDrop={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const sourceId = draggedTunnelId || e.dataTransfer.getData("text/plain");
-                            if (sourceId && onMoveToGroup) {
-                              onMoveToGroup(sourceId, subKey);
-                            }
-                            setDraggedTunnelId(null);
-                            setDropGroup(null);
-                          }}
-                          className={cn(
-                            "flex items-center justify-between px-2 py-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground cursor-pointer transition-colors rounded-sm",
-                            dropGroup === subKey ? "bg-primary/10 border border-primary/50 text-foreground" : ""
-                          )}
-                        >
-                          <div className="flex items-center gap-1.5">
-                            {isSubCollapsed ? (
-                              <Folder className="h-3 w-3 text-primary/60" />
-                            ) : (
-                              <FolderOpen className="h-3 w-3 text-primary/60" />
-                            )}
-                            <span>{subgroup.name}</span>
-                          </div>
-                          <span className="text-[10px] font-mono opacity-60">
-                            {subgroup.items.length}
-                          </span>
-                        </div>
-                        {!isSubCollapsed && (
-                          <div className="space-y-1 pl-1">
-                            {subgroup.items.map(renderTunnelItem)}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
                 </div>
               )}
             </div>
@@ -574,27 +719,11 @@ export function Sidebar({
         {/* Ungrouped Tunnels */}
         {ungrouped.length > 0 && (
           <div className="space-y-1 pt-1">
-            {hierarchicalGroups.length > 0 && (
-              <div
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (draggedTunnelId) setDropGroup("UNGROUPED");
-                }}
-                onDragLeave={() => setDropGroup(null)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  const sourceId = draggedTunnelId || e.dataTransfer.getData("text/plain");
-                  if (sourceId && onMoveToGroup) {
-                    onMoveToGroup(sourceId, null);
-                  }
-                  setDraggedTunnelId(null);
-                  setDropGroup(null);
-                }}
+            {flatGroups.length > 0 && (              <div
+                data-group-name={UNGROUPED_DROP_KEY}
                 className={cn(
                   "px-2 py-1 text-[11px] font-semibold text-muted-foreground transition-colors rounded-sm",
-                  dropGroup === "UNGROUPED" ? "bg-primary/10 border border-primary/50 text-foreground" : ""
+                  dropGroup === UNGROUPED_DROP_KEY ? "bg-primary/10 border border-primary/50 text-foreground" : ""
                 )}
               >
                 未分组
@@ -606,23 +735,8 @@ export function Sidebar({
 
         {regularTunnels.length === 0 && !generalConfig && (
           <div 
-            onDragOver={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (draggedTunnelId) setDropGroup("UNGROUPED");
-            }}
-            onDragLeave={() => setDropGroup(null)}
-            onDrop={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              const sourceId = draggedTunnelId || e.dataTransfer.getData("text/plain");
-              if (sourceId && onMoveToGroup) {
-                onMoveToGroup(sourceId, null);
-              }
-              setDraggedTunnelId(null);
-              setDropGroup(null);
-            }}
-            className={cn("py-8 text-center text-xs text-muted-foreground rounded-sm transition-colors", dropGroup === "UNGROUPED" ? "bg-primary/10 border border-primary/50" : "")}
+            data-group-name={UNGROUPED_DROP_KEY}
+            className={cn("py-8 text-center text-xs text-muted-foreground rounded-sm transition-colors", dropGroup === UNGROUPED_DROP_KEY ? "bg-primary/10 border border-primary/50" : "")}
           >
             没有匹配的隧道
           </div>

@@ -1,0 +1,254 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      action_type:
+        description: "发布模式"
+        required: true
+        type: choice
+        default: "auto-check"
+        options:
+          - "auto-check"     # 自动比对代码与线上版本（版本号未递增或已存在则跳过）
+          - "force-release"  # 强制对当前代码版本发布
+          - "custom-version" # 手动指定版本号发布
+      custom_version:
+        description: "指定自定义版本号（仅当选择 custom-version 时生效，如 1.0.9）"
+        required: false
+        type: string
+      draft:
+        description: "是否作为草稿发布（不公开）"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  version-gate:
+    name: Determine Target Version
+    runs-on: ubuntu-latest
+    outputs:
+      need_release: ${{ steps.eval.outputs.need_release }}
+      target_version: ${{ steps.eval.outputs.target_version }}
+      tag_name: ${{ steps.eval.outputs.tag_name }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Evaluate version diff
+        id: eval
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CUSTOM_VERSION: ${{ inputs.custom_version }}
+          ACTION_TYPE: ${{ inputs.action_type }}
+        run: |
+          set -euo pipefail
+
+          # 1. 自动提取代码中的当前版本号 (支持 package.json / tauri.conf.json / Cargo.toml)
+          if [ -f "package.json" ]; then
+            LOCAL_VER=$(jq -r '.version // empty' package.json)
+          elif [ -f "src-tauri/tauri.conf.json" ]; then
+            LOCAL_VER=$(jq -r '.version // empty' src-tauri/tauri.conf.json)
+          elif [ -f "src-tauri/Cargo.toml" ]; then
+            LOCAL_VER=$(grep -m 1 '^version = ' src-tauri/Cargo.toml | cut -d '"' -f 2)
+          else
+            LOCAL_VER="0.1.0"
+          fi
+
+          echo "Code Version detected: $LOCAL_VER"
+
+          # 2. 如果是通过 Git Tag 推送触发的
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            TAG_REF="${GITHUB_REF#refs/tags/}"
+            VER_REF="${TAG_REF#v}"
+            echo "🚀 Triggered via git tag: $TAG_REF"
+            echo "need_release=true" >> "$GITHUB_OUTPUT"
+            echo "target_version=$VER_REF" >> "$GITHUB_OUTPUT"
+            echo "tag_name=$TAG_REF" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # 3. 检查 GitHub 上该版本号对应的 Release 是否已存在
+          CHECK_TAG="v${LOCAL_VER}"
+          TAG_EXISTS="false"
+          if gh release view "$CHECK_TAG" >/dev/null 2>&1; then
+            TAG_EXISTS="true"
+          fi
+
+          # 获取线上最新的 Release 版本
+          ONLINE_TAG=$(gh release view --json tagName --jq '.tagName // empty' 2>/dev/null || echo "")
+          ONLINE_VER="${ONLINE_TAG#v}"
+          [ -z "$ONLINE_VER" ] && ONLINE_VER="0.0.0"
+
+          echo "Online latest release: $ONLINE_VER"
+          echo "Online release exists for $CHECK_TAG: $TAG_EXISTS"
+
+          ACTION="${ACTION_TYPE:-auto-check}"
+          TARGET_VER=""
+          NEED_RELEASE="false"
+
+          if [ "$ACTION" = "auto-check" ]; then
+            # 规则：已存在该版本号则跳过；不存在且本地版本 > 线上版本时触发自动发布
+            if [ "$TAG_EXISTS" = "true" ]; then
+              echo "ℹ️ 版本 $CHECK_TAG 线上已存在，跳过本次构建。"
+              NEED_RELEASE="false"
+            else
+              NEWEST=$(printf '%s\n%s\n' "$LOCAL_VER" "$ONLINE_VER" | sort -V | tail -n1)
+              if [ "$NEWEST" = "$LOCAL_VER" ] && [ "$LOCAL_VER" != "$ONLINE_VER" ]; then
+                echo "✅ 检测到新版本 ($LOCAL_VER > $ONLINE_VER 且 $CHECK_TAG 不存在)，触发自动发布！"
+                TARGET_VER="$LOCAL_VER"
+                NEED_RELEASE="true"
+              else
+                echo "ℹ️ 代码版本未递增 ($LOCAL_VER <= $ONLINE_VER)，跳过本次构建。"
+                NEED_RELEASE="false"
+              fi
+            fi
+          elif [ "$ACTION" = "force-release" ]; then
+            echo "⚠️ 手动强制发布当前版本: $LOCAL_VER"
+            TARGET_VER="$LOCAL_VER"
+            NEED_RELEASE="true"
+          elif [ "$ACTION" = "custom-version" ]; then
+            TARGET_VER="$CUSTOM_VERSION"
+            echo "⚠️ 手动发布指定版本: $TARGET_VER"
+            NEED_RELEASE="true"
+          fi
+
+          TARGET_VER="${TARGET_VER//$'\n'/}"
+          echo "need_release=$NEED_RELEASE" >> "$GITHUB_OUTPUT"
+          echo "target_version=$TARGET_VER" >> "$GITHUB_OUTPUT"
+          echo "tag_name=v${TARGET_VER}" >> "$GITHUB_OUTPUT"
+
+  release:
+    name: Build (${{ matrix.platform }} - ${{ matrix.arch }})
+    needs: [version-gate]
+    if: needs.version-gate.outputs.need_release == 'true'
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS Universal (Dual Arch: arm64 + x86_64 in single bundle)
+          - platform: "macos-latest"
+            arch: "universal"
+            args: "--target universal-apple-darwin"
+            rust_target: "universal"
+
+          # macOS Apple Silicon (arm64)
+          - platform: "macos-latest"
+            arch: "arm64"
+            args: "--target aarch64-apple-darwin"
+            rust_target: "aarch64-apple-darwin"
+
+          # macOS Intel (x86_64 / amd64)
+          - platform: "macos-latest"
+            arch: "x86_64"
+            args: "--target x86_64-apple-darwin"
+            rust_target: "x86_64-apple-darwin"
+
+          # Linux amd64 (x86_64)
+          - platform: "ubuntu-22.04"
+            arch: "amd64"
+            args: ""
+            rust_target: ""
+
+          # Linux arm64 (aarch64) - Native ARM64 Runner
+          - platform: "ubuntu-24.04-arm"
+            arch: "arm64"
+            args: ""
+            rust_target: ""
+
+          # Windows amd64 (x86_64)
+          - platform: "windows-latest"
+            arch: "x86_64"
+            args: ""
+            rust_target: ""
+
+          # Windows arm64 (aarch64)
+          - platform: "windows-latest"
+            arch: "arm64"
+            args: "--target aarch64-pc-windows-msvc --bundles nsis"
+            rust_target: "aarch64-pc-windows-msvc"
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Add macOS Universal targets
+        if: matrix.rust_target == 'universal'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - name: Add Specific Rust Target (${{ matrix.rust_target }})
+        if: matrix.rust_target != '' && matrix.rust_target != 'universal'
+        run: rustup target add ${{ matrix.rust_target }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.rust_target }}
+          workspaces: "./src-tauri -> target"
+
+      - name: Install dependencies (Linux only)
+        if: startsWith(matrix.platform, 'ubuntu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev patchelf build-essential curl wget file libssl-dev libxdo-dev
+
+      - name: Install Node dependencies
+        run: pnpm install
+
+      - name: Build and Release with Tauri Action
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ needs.version-gate.outputs.tag_name }}
+          releaseName: "TunnelFlow ${{ needs.version-gate.outputs.tag_name }}"
+          releaseBody: "TunnelFlow 跨平台版本（支持 macOS · Windows · Linux 的 arm64 与 amd64 完整多架构安装包）。"
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
+
+  publish:
+    name: Publish Release
+    needs: [version-gate, release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: ${{ !(github.event.inputs.draft == true || github.event.inputs.draft == 'true') }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Publish Release to Public
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ needs.version-gate.outputs.tag_name }}
+        run: |
+          TAG="$TAG_NAME"
+          echo "==> Publishing Release $TAG..."
+          gh release edit "$TAG" --draft=false --latest
+          echo "==> Release published successfully!"

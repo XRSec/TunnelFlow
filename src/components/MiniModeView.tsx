@@ -16,9 +16,10 @@ interface MiniModeViewProps {
   onRefreshTunnels: () => void;
   onSwitchToFull: () => void;
   onAddGroup?: (title: string) => void;
+  onOpenAboutModal?: () => void;
 }
 
-export function MiniModeView({ tunnels, groups, runtimeStatus, onStartTunnel, onStopTunnel, onRefreshTunnels, onSwitchToFull, onAddGroup }: MiniModeViewProps) {
+export function MiniModeView({ tunnels, groups, runtimeStatus, onStartTunnel, onStopTunnel, onRefreshTunnels, onSwitchToFull, onAddGroup, onOpenAboutModal }: MiniModeViewProps) {
   const [search, setSearch] = useState("");
   
   // Quick Add State
@@ -137,7 +138,7 @@ export function MiniModeView({ tunnels, groups, runtimeStatus, onStartTunnel, on
 
   return (
     <div className="flex flex-col h-screen w-full min-w-[370px] bg-background text-foreground overflow-hidden font-sans">
-      <TitleBar windowMode="mini" onSwitchMode={onSwitchToFull} />
+      <TitleBar windowMode="mini" onSwitchMode={onSwitchToFull} onOpenAboutModal={onOpenAboutModal} />
       
       <div className="flex-1 flex flex-col overflow-hidden bg-background relative w-full">
         {/* Header / Search Area */}

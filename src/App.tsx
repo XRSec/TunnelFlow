@@ -726,6 +726,7 @@ export function App() {
           onStartTunnel={handleConnect}
           onStopTunnel={handleDisconnect}
           onRefreshTunnels={async () => { const tList = await fetchTunnels(); setTunnels(tList); }}
+          onOpenAboutModal={() => setIsAboutModalOpen(true)}
           onSwitchToFull={() => {
             setWindowModeState("full");
             apiSetWindowMode("full");

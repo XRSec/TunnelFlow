@@ -72,7 +72,7 @@ export function AboutModal({
 
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-background/50 backdrop-blur-sm">
-      <div className="relative w-full max-w-sm overflow-hidden rounded-xl border border-border bg-card shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-[340px] sm:max-w-md w-full overflow-hidden rounded-xl border border-border bg-card shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between border-b border-border/40 px-5 py-3">
           <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
             关于

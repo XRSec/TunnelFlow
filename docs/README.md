@@ -10,6 +10,25 @@
 
 ---
 
+## 📸 界面预览 (Screenshots)
+
+### 常规配置 (General)
+![General](./general.png)
+
+### 连接设置 (Connection)
+![Connection](./connection.png)
+
+### 高级设置 (Advanced)
+![Advanced](./advanced.png)
+
+### 源码模式 (Source Mode)
+![Source Mode](./source_mode.png)
+
+### 迷你模式 (Mini Mode)
+![Mini Mode](./mini.png)
+
+---
+
 ## 🌟 核心亮点 (Key Features)
 
 - 🚀 **极轻量原生体验**：基于 Tauri v2 + Rust 后端，安装包仅约 **8MB**，空闲内存占用仅 **~35MB**（相比 Electron 节省 80%+ 内存）。
