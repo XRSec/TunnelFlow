@@ -234,7 +234,7 @@ pub fn open_main_window(app: tauri::AppHandle) {
 #[tauri::command]
 pub fn resize_tray_window(app: tauri::AppHandle, height: f64) {
     if let Some(tray_win) = app.get_webview_window("tray") {
-        let _ = tray_win.set_size(tauri::LogicalSize::new(320.0, height));
+        let _ = tray_win.set_size(tauri::LogicalSize::new(260.0, height));
     }
 }
 

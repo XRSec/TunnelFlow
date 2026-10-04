@@ -27,7 +27,7 @@
         "label": "tray",
         "title": "TunnelFlow Tray",
         "url": "/?view=tray",
-        "width": 320,
+        "width": 260,
         "height": 260,
         "resizable": false,
         "decorations": false,
