@@ -108,11 +108,10 @@ pub fn update_tray_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error
     }
 
     menu.append(&PredefinedMenuItem::separator(app)?)?;
-    let about_i = MenuItem::with_id(app, "about", "关于 TunnelFlow", true, None::<&str>)?;
-    menu.append(&about_i)?;
     let show_i = MenuItem::with_id(app, "show", "显示主窗口", true, None::<&str>)?;
     let quit_i = MenuItem::with_id(app, "quit", "退出 TunnelFlow", true, None::<&str>)?;
     menu.append(&show_i)?;
+
     menu.append(&quit_i)?;
 
     if let Some(tray) = app.tray_by_id("main-tray") {
@@ -122,10 +121,7 @@ pub fn update_tray_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error
 }
 
 pub fn handle_tray_menu_event(app: &AppHandle, event_id: &str) {
-    if event_id == "about" {
-        let _ = app.emit("open-about", ());
-        crate::commands::open_main_window(app.clone());
-    } else if event_id == "show" {
+    if event_id == "show" {
         if let Some(window) = app.get_webview_window("main").or_else(|| app.get_webview_window("TunnelFlow")) {
             let _ = window.set_resizable(true);
             let _ = window.set_min_size(Some(tauri::LogicalSize::new(370.0, 460.0)));
