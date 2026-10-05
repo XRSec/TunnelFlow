@@ -86,9 +86,11 @@ export function AboutModal({
         </div>
         
         <div className="px-6 py-6 flex flex-col items-center justify-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm font-bold text-lg">
-            TF
-          </div>
+          <img 
+            src="/app-icon.png" 
+            alt="TunnelFlow" 
+            className="h-12 w-12 rounded-2xl shadow-sm object-contain"
+          />
           <div className="flex flex-col items-center">
             <h1 className="text-xl font-bold tracking-tight text-foreground">TunnelFlow</h1>
             <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded-full mt-1">v{version}</span>

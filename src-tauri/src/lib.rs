@@ -92,7 +92,14 @@ pub fn run() {
                 app.on_menu_event(move |app, event| {
                     if event.id() == "about" {
                         let _ = app.emit("open-about", ());
-                        crate::commands::open_main_window(app.clone());
+                        if let Some(tray_win) = app.get_webview_window("tray") {
+                            let _ = tray_win.hide();
+                        }
+                        if let Some(main_win) = app.get_webview_window("main").or_else(|| app.get_webview_window("TunnelFlow")) {
+                            let _ = main_win.unminimize();
+                            let _ = main_win.show();
+                            let _ = main_win.set_focus();
+                        }
                     }
                 });
             }
