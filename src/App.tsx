@@ -188,15 +188,7 @@ export function App() {
     };
   }, [windowMode]);
 
-  useEffect(() => {
-    const unlisten = listen("window-reset-mini", () => {
-      setWindowModeState("mini");
-      localStorage.setItem("tunnelflow:window_mode", "mini");
-    });
-    return () => {
-      unlisten.then(f => f());
-    };
-  }, []);
+
   useEffect(() => {
     const unlisten = listen("open-about", () => {
       setIsAboutModalOpen(true);

@@ -122,15 +122,7 @@ pub fn update_tray_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error
 
 pub fn handle_tray_menu_event(app: &AppHandle, event_id: &str) {
     if event_id == "show" {
-        if let Some(window) = app.get_webview_window("main").or_else(|| app.get_webview_window("TunnelFlow")) {
-            let _ = window.set_resizable(true);
-            let _ = window.set_min_size(Some(tauri::LogicalSize::new(370.0, 460.0)));
-            let _ = window.set_size(tauri::LogicalSize::new(370.0, 670.0));
-            let _ = window.center();
-            let _ = window.show();
-            let _ = window.unminimize();
-            let _ = window.set_focus();
-        }
+        crate::commands::open_main_window(app.clone());
     } else if event_id == "quit" {
         std::process::exit(0);
     } else if event_id.starts_with("tunnel_toggle:") {
