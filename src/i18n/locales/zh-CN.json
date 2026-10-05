@@ -6,10 +6,12 @@
     "description": "现代化的跨平台 SSH 隧道管理器。\n本地、远程、动态端口转发，SSH Config 双向同步。",
     "autostart": "开机自动启动",
     "autoUpdate": "自动检测更新",
-    "language": "语言",
+    "language": "界面语言",
     "checkUpdate": "检查更新",
     "checking": "正在检查...",
-    "upToDate": "当前已是最新版本"
+    "upToDate": "当前已是最新版本",
+    "langSystem": "跟随系统",
+    "autoCheckUpdate": "自动检测更新"
   },
   "auto_1000": "主机名 (Alias)",
   "auto_1001": "用户 (User)",

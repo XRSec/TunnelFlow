@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { changeAppLanguage } from "../i18n";
-import { X, ExternalLink, ShieldCheck, RefreshCw, Loader2 } from "lucide-react";
+import { X, ExternalLink, ShieldCheck, RefreshCw, Loader2, Languages } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { getVersion } from '@tauri-apps/api/app';
 import { invoke } from "@tauri-apps/api/core";
@@ -22,6 +22,7 @@ export function AboutModal({
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [upToDateMsg, setUpToDateMsg] = useState("");
   const [autoCheckUpdate, setAutoCheckUpdate] = useState(true);
+  const [currentLang, setCurrentLang] = useState<"system" | "en" | "zh-CN">("system");
 
   useEffect(() => {
     if (isOpen) {
@@ -30,6 +31,7 @@ export function AboutModal({
       setUpToDateMsg("");
       const autoCheckStr = localStorage.getItem("tunnelflow:auto_check_update");
       setAutoCheckUpdate(autoCheckStr !== "false");
+      setCurrentLang((localStorage.getItem("tunnelflow:language") as "system" | "en" | "zh-CN") || "system");
     }
   }, [isOpen]);
 
@@ -53,6 +55,11 @@ export function AboutModal({
     const nextState = !autoCheckUpdate;
     setAutoCheckUpdate(nextState);
     localStorage.setItem("tunnelflow:auto_check_update", String(nextState));
+  };
+
+  const handleLangChange = (lang: "system" | "en" | "zh-CN") => {
+    setCurrentLang(lang);
+    changeAppLanguage(lang);
   };
 
   const handleUpdateCheck = async () => {
@@ -106,38 +113,59 @@ export function AboutModal({
 
           <div className="w-full h-px bg-border/50 my-2" />
 
-          <div className="w-full flex items-center justify-between text-xs mb-1">
-            <span className="text-foreground font-medium flex items-center gap-1.5">{t('about.language')}</span>
-            <select 
-              value={localStorage.getItem('tunnelflow:language') || 'system'}
-              onChange={(e) => changeAppLanguage(e.target.value as 'system'|'en'|'zh-CN')}
-              className="bg-input text-xs rounded border border-border px-1 py-0.5"
-            >
-              <option value="system">系统 (System)</option>
-              <option value="zh-CN">简体中文</option>
-              <option value="en">English</option>
-            </select>
-          </div>
+          <div className="w-full rounded-xl bg-muted/40 border border-border/50 p-2.5 space-y-2.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-foreground font-medium flex items-center gap-1.5">
+                <Languages size={14} className="text-indigo-500" /> {t('about.language')}
+              </span>
+              <div className="flex items-center rounded-lg bg-input p-0.5 border border-border/50">
+                {[
+                  { id: 'system', label: t('about.langSystem', '跟随系统') },
+                  { id: 'zh-CN', label: '中文' },
+                  { id: 'en', label: 'English' }
+                ].map(opt => (
+                  <button
+                    key={opt.id}
+                    onClick={() => handleLangChange(opt.id as "system" | "en" | "zh-CN")}
+                    className={`px-2 py-1 text-[11px] rounded-md transition-all ${
+                      currentLang === opt.id 
+                        ? 'bg-primary text-primary-foreground shadow-xs font-semibold' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
+            <div className="h-px w-full bg-border/50" />
 
-          <div className="w-full flex items-center justify-between text-xs mb-1">
-            <span className="text-foreground font-medium flex items-center gap-1.5"><ShieldCheck size={14} className="text-emerald-500" /> 开机自动启动</span>
-            <button 
-              onClick={toggleAutostart}
-              className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${autostartEnabled ? 'bg-primary' : 'bg-input'}`}
-            >
-              <span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${autostartEnabled ? 'translate-x-3' : 'translate-x-0'}`} />
-            </button>
-          </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-foreground font-medium flex items-center gap-1.5">
+                <ShieldCheck size={14} className="text-emerald-500" /> {t('about.autostart', '开机自动启动')}
+              </span>
+              <button 
+                onClick={toggleAutostart}
+                className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${autostartEnabled ? 'bg-primary' : 'bg-input'}`}
+              >
+                <span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${autostartEnabled ? 'translate-x-3' : 'translate-x-0'}`} />
+              </button>
+            </div>
 
-          <div className="w-full flex items-center justify-between text-xs mb-1">
-            <span className="text-foreground font-medium flex items-center gap-1.5"><RefreshCw size={14} className="text-blue-500" /> 自动检测更新</span>
-            <button 
-              onClick={toggleAutoCheckUpdate}
-              className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${autoCheckUpdate ? 'bg-primary' : 'bg-input'}`}
-            >
-              <span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${autoCheckUpdate ? 'translate-x-3' : 'translate-x-0'}`} />
-            </button>
+            <div className="h-px w-full bg-border/50" />
+
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-foreground font-medium flex items-center gap-1.5">
+                <RefreshCw size={14} className="text-blue-500" /> {t('about.autoCheckUpdate', '自动检测更新')}
+              </span>
+              <button 
+                onClick={toggleAutoCheckUpdate}
+                className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${autoCheckUpdate ? 'bg-primary' : 'bg-input'}`}
+              >
+                <span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${autoCheckUpdate ? 'translate-x-3' : 'translate-x-0'}`} />
+              </button>
+            </div>
           </div>
 
           <div className="w-full flex flex-col gap-2 mt-2">
