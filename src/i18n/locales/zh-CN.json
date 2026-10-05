@@ -1,4 +1,6 @@
 {
+  "common.visual": "可视化",
+  "common.source": "源码",
   "about": {
     "title": "关于",
     "description": "现代化的跨平台 SSH 隧道管理器。\n本地、远程、动态端口转发，SSH Config 双向同步。",

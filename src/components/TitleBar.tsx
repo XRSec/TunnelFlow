@@ -82,9 +82,9 @@ export function TitleBar({
 
           {onViewModeChange && windowMode !== "mini" && <div className="flex items-center bg-muted/50 rounded-md p-0.5 border border-border/40 mr-2" data-no-drag>
               <button type="button" onClick={() => onViewModeChange("visual")} className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded transition-colors ${viewMode === "visual" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                <SlidersHorizontal className="h-3 w-3" />{t("auto_2006")}</button>
+                <SlidersHorizontal className="h-3 w-3" />{t("common.visual", "可视化")}</button>
               <button type="button" onClick={() => onViewModeChange("source")} className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded transition-colors ${viewMode === "source" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                <Code2 className="h-3 w-3" />{t("auto_2007")}</button>
+                <Code2 className="h-3 w-3" />{t("common.source", "源码")}</button>
             </div>}
 
           {windowMode === "full" && onSwitchMode && <button type="button" data-no-drag onClick={onSwitchMode} className="drag-exclude inline-flex h-7 px-2 items-center justify-center gap-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer text-[10px] font-medium border border-border/40" title={t("auto_2008")}>{t("auto_2009")}</button>}

@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { changeAppLanguage } from "@/i18n";
 import { invoke } from "@tauri-apps/api/core";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { MiniModeView } from "@/components/MiniModeView";
@@ -86,6 +87,15 @@ export function App() {
   const resizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isResizingRef = useRef(false);
   const isMouseDownRef = useRef(false);
+  useEffect(() => {
+    const unlisten = listen<string>("change-language", (event) => {
+      changeAppLanguage(event.payload as "system" | "zh-CN" | "en");
+    });
+    return () => {
+      unlisten.then(f => f());
+    };
+  }, []);
+
   useEffect(() => {
     // Initial sync
     const currentMode = localStorage.getItem("tunnelflow:window_mode") as WindowMode || "mini";

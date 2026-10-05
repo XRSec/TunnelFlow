@@ -56,6 +56,16 @@ pub fn run() {
                 use tauri::Emitter;
                 
                 let about_item = MenuItem::with_id(app, "about", "关于 TunnelFlow", true, None::<&str>).unwrap();
+                let lang_system = MenuItem::with_id(app, "lang_system", "跟随系统 (System)", true, None::<&str>).unwrap();
+                let lang_zh_cn = MenuItem::with_id(app, "lang_zh_cn", "简体中文", true, None::<&str>).unwrap();
+                let lang_en = MenuItem::with_id(app, "lang_en", "English", true, None::<&str>).unwrap();
+                let lang_submenu = Submenu::with_id_and_items(
+                    app,
+                    "lang_submenu",
+                    "语言 (Language)",
+                    true,
+                    &[&lang_system, &lang_zh_cn, &lang_en],
+                ).unwrap();
                 let sep1 = PredefinedMenuItem::separator(app).unwrap();
                 let services = PredefinedMenuItem::services(app, None).unwrap();
                 let sep2 = PredefinedMenuItem::separator(app).unwrap();
@@ -67,6 +77,7 @@ pub fn run() {
 
                 let items: &[&dyn IsMenuItem<_>] = &[
                     &about_item,
+                    &lang_submenu,
                     &sep1,
                     &services,
                     &sep2,
@@ -90,9 +101,21 @@ pub fn run() {
                 }
                 
                 app.on_menu_event(move |app, event| {
-                    if event.id() == "about" {
-                        crate::commands::open_main_window(app.clone());
-                        let _ = app.emit("open-about", ());
+                    match event.id().as_ref() {
+                        "about" => {
+                            crate::commands::open_main_window(app.clone());
+                            let _ = app.emit("open-about", ());
+                        }
+                        "lang_system" => {
+                            let _ = app.emit("change-language", "system");
+                        }
+                        "lang_zh_cn" => {
+                            let _ = app.emit("change-language", "zh-CN");
+                        }
+                        "lang_en" => {
+                            let _ = app.emit("change-language", "en");
+                        }
+                        _ => {}
                     }
                 });
             }

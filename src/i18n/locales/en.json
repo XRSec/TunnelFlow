@@ -1,4 +1,6 @@
 {
+  "common.visual": "Visual",
+  "common.source": "Source",
   "about": "{'title': 'About', 'description': 'Modern cross-platform SSH tunnel manager.\\nLocal, remote, dynamic port forwarding, SSH Config two-way sync.', 'autostart': 'Start on boot', 'autoUpdate': 'Auto check for updates', 'language': 'Language', 'checkUpdate': 'Check for updates', 'checking': 'Checking...', 'upToDate': 'Currently up to date'}",
   "auto_1000": "Hostname (Alias)",
   "auto_1001": "User",
