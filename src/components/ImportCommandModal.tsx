@@ -1,33 +1,32 @@
+import { useTranslation } from "react-i18next";
 import React, { useState } from "react";
 import { Download, X, Terminal, AlertCircle, Check } from "lucide-react";
 import { Tunnel, PortForwarding, ForwardType } from "@/types/tunnel";
 import { Button } from "@/components/ui/Button";
 import { generateUUID } from "@/lib/utils";
-
 interface ImportCommandModalProps {
   isOpen: boolean;
   onClose: () => void;
   onImport: (tunnel: Tunnel) => void;
 }
-
 export function ImportCommandModal({
   isOpen,
   onClose,
-  onImport,
+  onImport
 }: ImportCommandModalProps) {
+  const {
+    t
+  } = useTranslation();
   const [command, setCommand] = useState("");
   const [error, setError] = useState<string | null>(null);
-
   if (!isOpen) return null;
-
   const parseCommand = () => {
     setError(null);
     const trimmed = command.trim();
     if (!trimmed) {
-      setError("请输入 SSH 命令");
+      setError(t("auto_2222"));
       return;
     }
-
     try {
       // Split command respecting quotes
       const regex = /[^\s"']+|"([^"]*)"|'([^']*)'/g;
@@ -36,12 +35,10 @@ export function ImportCommandModal({
       while ((match = regex.exec(trimmed)) !== null) {
         tokens.push(match[1] || match[2] || match[0]);
       }
-
       if (tokens.length === 0 || tokens[0] !== "ssh") {
-        setError("命令必须以 ssh 开头");
+        setError(t("auto_2223"));
         return;
       }
-
       let host = "";
       let port = 22;
       const forwards: PortForwarding[] = [];
@@ -50,7 +47,6 @@ export function ImportCommandModal({
       let serverAliveCountMax: number | null = null;
       let compression = false;
       let identityFile: string | null = null;
-
       for (let i = 1; i < tokens.length; i++) {
         const token = tokens[i];
         if (token === "-p" && i + 1 < tokens.length) {
@@ -70,7 +66,7 @@ export function ImportCommandModal({
               port: parseInt(parts[1]) || 0,
               remote_host: parts[2],
               remote_port: parseInt(parts[3]) || 0,
-              is_active: true,
+              is_active: true
             });
           } else if (parts.length === 3) {
             forwards.push({
@@ -80,7 +76,7 @@ export function ImportCommandModal({
               port: parseInt(parts[0]) || 0,
               remote_host: parts[1],
               remote_port: parseInt(parts[2]) || 0,
-              is_active: true,
+              is_active: true
             });
           }
         } else if (token === "-D" && i + 1 < tokens.length) {
@@ -94,7 +90,7 @@ export function ImportCommandModal({
               port: parseInt(parts[1]) || 0,
               remote_host: "",
               remote_port: 0,
-              is_active: true,
+              is_active: true
             });
           } else {
             forwards.push({
@@ -104,7 +100,7 @@ export function ImportCommandModal({
               port: parseInt(parts[0]) || 0,
               remote_host: "",
               remote_port: 0,
-              is_active: true,
+              is_active: true
             });
           }
         } else if (token === "-R" && i + 1 < tokens.length) {
@@ -118,7 +114,7 @@ export function ImportCommandModal({
               port: parseInt(parts[1]) || 0,
               remote_host: parts[2],
               remote_port: parseInt(parts[3]) || 0,
-              is_active: true,
+              is_active: true
             });
           }
         } else if (token === "-o" && i + 1 < tokens.length) {
@@ -126,23 +122,18 @@ export function ImportCommandModal({
           const [k, v] = opt.split("=");
           if (k && v) {
             if (k.toLowerCase() === "connecttimeout") connectTimeout = parseInt(v) || null;
-            if (k.toLowerCase() === "serveraliveinterval")
-              serverAliveInterval = parseInt(v) || null;
-            if (k.toLowerCase() === "serveralivecountmax")
-              serverAliveCountMax = parseInt(v) || null;
+            if (k.toLowerCase() === "serveraliveinterval") serverAliveInterval = parseInt(v) || null;
+            if (k.toLowerCase() === "serveralivecountmax") serverAliveCountMax = parseInt(v) || null;
           }
         } else if (!token.startsWith("-") && i === tokens.length - 1) {
           host = token;
         }
       }
-
       if (!host) {
-        setError("无法从命令中解析出目标主机 (user@host 或别名)");
+        setError(t("auto_2224"));
         return;
       }
-
       const name = host.includes("@") ? host.split("@")[1] : host;
-
       const newTunnel: Tunnel = {
         id: generateUUID(),
         name: `导入-${name}`,
@@ -157,9 +148,8 @@ export function ImportCommandModal({
         connect_timeout: connectTimeout,
         server_alive_interval: serverAliveInterval,
         server_alive_count_max: serverAliveCountMax,
-        identity_file: identityFile,
+        identity_file: identityFile
       };
-
       onImport(newTunnel);
       setCommand("");
       onClose();
@@ -167,58 +157,37 @@ export function ImportCommandModal({
       setError(`解析命令失败: ${e.message || e}`);
     }
   };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 select-none">
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 select-none">
       <div className="w-full max-w-lg rounded-xl border border-border bg-card p-5 text-card-foreground shadow-xl">
         <div className="flex items-center justify-between pb-3 border-b border-border">
           <div className="flex items-center gap-2">
             <Terminal className="h-4 w-4 text-primary" />
-            <h2 className="font-semibold text-sm">从剪贴板导入 SSH 命令行</h2>
+            <h2 className="font-semibold text-sm">{t("auto_1032")}</h2>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md p-1 text-muted-foreground hover:text-foreground"
-          >
+          <button type="button" onClick={onClose} className="rounded-md p-1 text-muted-foreground hover:text-foreground">
             <X className="h-4 w-4" />
           </button>
         </div>
 
         <div className="mt-4 space-y-3">
-          <p className="text-xs text-muted-foreground">
-            粘贴任意包含端口转发参数的 SSH 命令（如{" "}
-            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">
-              ssh -N -L 127.0.0.1:8080:10.0.0.5:80 root@vps
-            </code>
-            ），TunnelFlow 会自动解析并转换为结构化配置。
-          </p>
+          <p className="text-xs text-muted-foreground">{t("auto_1033")}{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">{t("auto_1034")}</code>{t("auto_1035")}</p>
 
-          <textarea
-            value={command}
-            onChange={(e) => setCommand(e.target.value)}
-            placeholder="ssh -N -L 127.0.0.1:17892:[::]:7890 -o ConnectTimeout=30 vps1-ipv6"
-            className="h-28 w-full rounded-lg border border-input bg-background/80 p-3 font-mono text-xs focus:border-primary focus:outline-hidden resize-none"
-          />
+          <textarea value={command} onChange={e => setCommand(e.target.value)} placeholder="ssh -N -L 127.0.0.1:17892:[::]:7890 -o ConnectTimeout=30 vps1-ipv6" className="h-28 w-full rounded-lg border border-input bg-background/80 p-3 font-mono text-xs focus:border-primary focus:outline-hidden resize-none" />
 
-          {error && (
-            <div className="flex items-center gap-2 text-xs text-destructive">
+          {error && <div className="flex items-center gap-2 text-xs text-destructive">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{error}</span>
-            </div>
-          )}
+            </div>}
         </div>
 
         <div className="mt-5 flex items-center justify-end gap-2 border-t border-border pt-3">
-          <Button variant="outline" size="sm" onClick={onClose}>
-            取消
-          </Button>
+          <Button variant="outline" size="sm" onClick={onClose}>{t("auto_2225")}</Button>
           <Button variant="primary" size="sm" onClick={parseCommand}>
             <Download className="h-3.5 w-3.5" />
-            <span>解析并导入</span>
+            <span>{t("auto_2226")}</span>
           </Button>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 }
