@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { changeAppLanguage } from "../i18n";
 import { X, ExternalLink, ShieldCheck, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { getVersion } from '@tauri-apps/api/app';
@@ -14,6 +16,7 @@ export function AboutModal({
   onClose: () => void;
   onCheckUpdate: () => void;
 }) {
+  const { t, i18n } = useTranslation();
   const [version, setVersion] = useState("1.0.0");
   const [autostartEnabled, setAutostartEnabled] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
@@ -102,6 +105,20 @@ export function AboutModal({
           </p>
 
           <div className="w-full h-px bg-border/50 my-2" />
+
+          <div className="w-full flex items-center justify-between text-xs mb-1">
+            <span className="text-foreground font-medium flex items-center gap-1.5">{t('about.language')}</span>
+            <select 
+              value={localStorage.getItem('tunnelflow:language') || 'system'}
+              onChange={(e) => changeAppLanguage(e.target.value as 'system'|'en'|'zh-CN')}
+              className="bg-input text-xs rounded border border-border px-1 py-0.5"
+            >
+              <option value="system">系统 (System)</option>
+              <option value="zh-CN">简体中文</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+
 
           <div className="w-full flex items-center justify-between text-xs mb-1">
             <span className="text-foreground font-medium flex items-center gap-1.5"><ShieldCheck size={14} className="text-emerald-500" /> 开机自动启动</span>
