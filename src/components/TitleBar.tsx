@@ -53,10 +53,10 @@ export function TitleBar({
         {onToggleSidebar && <button type="button" data-no-drag onClick={onToggleSidebar} className="drag-exclude inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer" title={isSidebarCollapsed ? t("auto_2000") : t("auto_2001")} aria-label={isSidebarCollapsed ? t("auto_2002") : t("auto_2003")}>
             <PanelLeft className="h-3.5 w-3.5" />
           </button>}
-        <button type="button" data-no-drag onClick={onOpenAboutModal} className={cn("flex items-center gap-2 px-1 py-0.5 -ml-1 select-none drag-exclude rounded-md transition-colors", onOpenAboutModal && "cursor-pointer hover:bg-muted/60 active:scale-95")} title={t("auto_2004")}>
-          <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-xs font-bold text-[10px]">{t("auto_1000")}</div>
-          <span className="font-semibold text-xs tracking-tight text-foreground truncate">{t("auto_1001")}</span>
-          <span className="rounded-full bg-muted/80 px-1.5 py-0.5 text-[9px] font-mono text-muted-foreground border border-border/50">{t("auto_1002")}</span>
+        <button type="button" data-no-drag onClick={onOpenAboutModal} className={cn("flex items-center gap-2 px-1 py-0.5 -ml-1 select-none drag-exclude rounded-md transition-colors", onOpenAboutModal && "cursor-pointer hover:bg-muted/60 active:scale-95")} title="关于 TunnelFlow">
+          <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-xs font-bold text-[10px]">TF</div>
+          <span className="font-semibold text-xs tracking-tight text-foreground truncate">TunnelFlow</span>
+          <span className="rounded-full bg-muted/80 px-1.5 py-0.5 text-[9px] font-mono text-muted-foreground border border-border/50">v1.0</span>
         </button>
 
         {connectedCount > 0 && <div className="hidden sm:flex items-center gap-1.5 ml-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
