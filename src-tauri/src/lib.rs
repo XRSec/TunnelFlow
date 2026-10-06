@@ -8,7 +8,7 @@ pub mod updater;
 
 use tauri::{tray::{MouseButtonState, TrayIconBuilder, TrayIconEvent}, Manager, WindowEvent};
 use commands::{is_mouse_button_down, check_for_updates, download_and_install_update, play_system_sound, set_window_mode,
-            open_main_window,
+            open_main_window, exit_app,
             resize_tray_window, resize_mini_window, 
     delete_tunnel, get_groups, get_known_hosts, get_runtime_status, get_tunnels, list_keys, reorder_tunnels,
     save_tunnel, start_tunnel, stop_tunnel, AppState,
@@ -44,6 +44,7 @@ pub fn run() {
             play_system_sound,
             set_window_mode,
             open_main_window,
+            exit_app,
             is_mouse_button_down,
             resize_tray_window, resize_mini_window,
             check_for_updates,
@@ -185,6 +186,12 @@ pub fn run() {
             WindowEvent::CloseRequested { api, .. } => {
                 api.prevent_close();
                 let _ = window.hide();
+                #[cfg(target_os = "macos")]
+                {
+                    if window.label() == "main" || window.label() == "TunnelFlow" {
+                        let _ = window.app_handle().set_activation_policy(tauri::ActivationPolicy::Accessory);
+                    }
+                }
             }
             WindowEvent::Focused(false) => {
                 if window.label() == "tray" {

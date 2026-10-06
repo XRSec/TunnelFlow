@@ -295,6 +295,7 @@ export function App() {
   }, [fontScale]);
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.repeat) return;
       if (e.metaKey || e.ctrlKey) {
         if (e.key === "s" || e.key === "S") {
           e.preventDefault();
@@ -336,15 +337,20 @@ export function App() {
             import("@tauri-apps/api/window").then(({
               getCurrentWindow
             }) => {
-              getCurrentWindow().minimize();
+              getCurrentWindow().close();
             }).catch(() => {});
           }
-        } else if (e.key === "q" || e.key === "Q") {
+        } else if (e.key === "m" || e.key === "M") {
           e.preventDefault();
           import("@tauri-apps/api/window").then(({
             getCurrentWindow
           }) => {
-            getCurrentWindow().close();
+            getCurrentWindow().minimize();
+          }).catch(() => {});
+        } else if (e.key === "q" || e.key === "Q") {
+          e.preventDefault();
+          import("@tauri-apps/api/core").then(({ invoke }) => {
+            invoke("exit_app").catch(() => {});
           }).catch(() => {});
         }
       }

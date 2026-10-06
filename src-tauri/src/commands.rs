@@ -217,6 +217,10 @@ pub fn resize_mini_window(app: tauri::AppHandle, height: f64) -> Result<(), Stri
 
 #[tauri::command]
 pub fn open_main_window(app: tauri::AppHandle) {
+    #[cfg(target_os = "macos")]
+    {
+        let _ = app.set_activation_policy(tauri::ActivationPolicy::Regular);
+    }
     if let Some(tray_win) = app.get_webview_window("tray") {
         let _ = tray_win.hide();
     }
@@ -227,6 +231,17 @@ pub fn open_main_window(app: tauri::AppHandle) {
         let _ = main_win.show();
         let _ = main_win.set_focus();
     }
+}
+
+#[tauri::command]
+pub fn exit_app(app: tauri::AppHandle, state: tauri::State<'_, AppState>) {
+    // Terminate any active SSH child processes before exiting
+    if let Ok(tunnels) = state.cached_tunnels.lock() {
+        for t in tunnels.iter() {
+            let _ = state.process_mgr.stop_tunnel(&t.id);
+        }
+    }
+    app.exit(0);
 }
 
 #[tauri::command]
