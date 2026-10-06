@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import React, { useState, useRef, useEffect } from "react";
 import { FileText, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -8,7 +9,8 @@ interface InlineMemoFieldProps {
   placeholder?: string;
 }
 
-export function InlineMemoField({ value, onChange, placeholder = "备注..." }: InlineMemoFieldProps) {
+export function InlineMemoField({ value, onChange, placeholder }: InlineMemoFieldProps) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [tempVal, setTempVal] = useState(value || "");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -43,7 +45,7 @@ export function InlineMemoField({ value, onChange, placeholder = "备注..." }: 
         <button
           onClick={() => setExpanded(true)}
           className="h-6 w-6 flex items-center justify-center rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-muted/50 transition-colors shrink-0"
-          title="添加备注"
+          title={t("common.addRemark", "添加备注")}
         >
           <FileText className="h-3.5 w-3.5" />
         </button>

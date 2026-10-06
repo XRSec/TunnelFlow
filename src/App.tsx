@@ -451,7 +451,7 @@ export function App() {
               console.debug(e);
             }
             const tName = tunnels.find(t => t.id === id)?.name || t("auto_2250");
-            sendNotification(t("auto_2251"), `${tName} 已成功连接`);
+            sendNotification(t("auto_2251"), t("notifications.connectedMsg", { name: tName, defaultValue: `${tName} 已成功连接` }));
           } else if (currState === "error" && (prevState === "connecting" || prevState === "connected")) {
             try {
               playConnectFailedSound();
@@ -459,7 +459,7 @@ export function App() {
               console.debug(e);
             }
             const tName = tunnels.find(t => t.id === id)?.name || t("auto_2252");
-            sendNotification(t("auto_2253"), curr.error_message || `${tName} 连接发生错误`);
+            sendNotification(t("auto_2253"), curr.error_message || t("notifications.errorMsg", { name: tName, defaultValue: `${tName} 连接发生错误` }));
           }
         }
         prevRuntimeStatusRef.current = merged;
@@ -490,7 +490,7 @@ export function App() {
   const handleAddTunnel = () => {
     const newTunnel: Tunnel = {
       id: generateUUID(),
-      name: `新主机-${tunnels.length + 1}`,
+      name: `${t("common.newHostPrefix", "新主机")}-${tunnels.length + 1}`,
       host: "root@192.168.1.100",
       port: 22,
       auto_connect: false,
@@ -707,7 +707,7 @@ export function App() {
         console.debug(e);
       }
       const targetTunnel = tunnels.find(t => t.id === targetId);
-      sendNotification(t("auto_2265"), `${targetTunnel?.name || t("auto_2266")} 已断开连接`);
+      sendNotification(t("auto_2265"), t("notifications.disconnectedMsg", { name: targetTunnel?.name || t("auto_2266"), defaultValue: `${targetTunnel?.name || t("auto_2266")} 已断开连接` }));
     } catch (err: any) {
       console.error("Failed to disconnect:", err);
     }

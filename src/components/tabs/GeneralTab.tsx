@@ -354,7 +354,7 @@ export function GeneralTab({
           return <div key={f.id} className="flex items-center justify-between p-2 rounded-md bg-muted/40 border border-border/50">
  <div className="flex items-center gap-3 min-w-0">
  <span className="text-muted-foreground whitespace-nowrap shrink-0 min-w-fit font-mono text-[11px]">
- {f.forward === "dynamic" ? "SOCKS5" : `本地 :${f.port}`}
+ {f.forward === "dynamic" ? "SOCKS5" : t("generalTab.localPort", { port: f.port, defaultValue: `本地 :${f.port}` })}
  </span>
  <div className="min-w-0 overflow-hidden flex-1"><span className="text-primary font-medium truncate block">{url}</span></div>
  </div>

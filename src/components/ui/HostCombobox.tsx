@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { ChevronDown, X, Check, Server, Globe, Laptop } from "lucide-react";
 import { Tunnel } from "@/types/tunnel";
@@ -35,6 +36,7 @@ export function HostCombobox({
   currentTunnelId,
   excludeName,
 }: HostComboboxProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number>(-1);
@@ -44,15 +46,15 @@ export function HostCombobox({
   const effectivePlaceholder =
     placeholder ||
     (mode === "alias"
-      ? "选择或输入 ~/.ssh/config 主机别名..."
-      : "输入或选择主机地址 (IP / 域名)...");
+      ? t("hostCombobox.placeholderAlias", "选择或输入 ~/.ssh/config 主机别名...")
+      : t("hostCombobox.placeholderHost", "输入或选择主机地址 (IP / 域名)..."));
 
   // Common loopback / local hosts (for address mode)
   const commonHosts: HostOption[] = [
-    { value: "127.0.0.1", label: "本地环回 (Loopback)", category: "common", badge: "IPv4" },
-    { value: "localhost", label: "本机域名", category: "common", badge: "Local" },
-    { value: "0.0.0.0", label: "所有网络接口", category: "common", badge: "All Bind" },
-    { value: "::1", label: "IPv6 本地环回", category: "common", badge: "IPv6" },
+    { value: "127.0.0.1", label: t("hostCombobox.loopback", "本地环回 (Loopback)"), category: "common", badge: "IPv4" },
+    { value: "localhost", label: t("hostCombobox.localDomain", "本机域名"), category: "common", badge: "Local" },
+    { value: "0.0.0.0", label: t("hostCombobox.allInterfaces", "所有网络接口"), category: "common", badge: "All Bind" },
+    { value: "::1", label: t("hostCombobox.ipv6Loopback", "IPv6 本地环回"), category: "common", badge: "IPv6" },
   ];
 
   // Extract hosts from existing tunnels based on mode
@@ -61,10 +63,10 @@ export function HostCombobox({
     const seen = new Set<string>();
 
     if (mode === "alias") {
-      // In ALIAS mode: value is the alias name (t.name)
-      tunnels.forEach((t) => {
-        if (t.id === currentTunnelId || t.name === excludeName) return;
-        if (t.is_general_config || t.name === "*") {
+      // In ALIAS mode: value is the alias name (tunnelItem.name)
+      tunnels.forEach((tunnelItem) => {
+        if (tunnelItem.id === currentTunnelId || tunnelItem.name === excludeName) return;
+        if (tunnelItem.is_general_config || tunnelItem.name === "*") {
           list.push({
             value: "*",
             label: "Host * (全局配置，所有主机的默认继承值)",
@@ -74,32 +76,32 @@ export function HostCombobox({
           return;
         }
         
-        const alias = t.name?.trim();
+        const alias = tunnelItem.name?.trim();
         if (!alias || alias === "*" || seen.has(alias)) return;
         seen.add(alias);
 
-        const hostPart = t.host.includes("@") ? t.host.split("@")[1] : t.host;
+        const hostPart = tunnelItem.host.includes("@") ? tunnelItem.host.split("@")[1] : tunnelItem.host;
         list.push({
           value: alias, // Fills in the alias!
           label: hostPart && hostPart !== alias ? hostPart : undefined,
           category: "tunnels",
-          badge: t.group || "已有别名",
+          badge: tunnelItem.group || t("hostCombobox.existingAliases", "已有别名"),
         });
       });
     } else {
       // In ADDRESS mode: value is the real host/IP address (hostPart)
-      tunnels.forEach((t) => {
-        if (t.is_general_config) return;
-        if (t.id === currentTunnelId || t.name === excludeName) return;
-        const hostPart = t.host.includes("@") ? t.host.split("@")[1] : t.host;
+      tunnels.forEach((tunnelItem) => {
+        if (tunnelItem.is_general_config) return;
+        if (tunnelItem.id === currentTunnelId || tunnelItem.name === excludeName) return;
+        const hostPart = tunnelItem.host.includes("@") ? tunnelItem.host.split("@")[1] : tunnelItem.host;
         if (!hostPart || hostPart === "*" || seen.has(hostPart)) return;
         seen.add(hostPart);
 
         list.push({
           value: hostPart, // Fills in the address!
-          label: t.name && t.name !== hostPart ? t.name : undefined,
+          label: tunnelItem.name && tunnelItem.name !== hostPart ? tunnelItem.name : undefined,
           category: "tunnels",
-          badge: t.group || "已有主机",
+          badge: tunnelItem.group || t("hostCombobox.existingHosts", "已有主机"),
         });
       });
     }
@@ -248,7 +250,7 @@ export function HostCombobox({
                 inputRef.current?.focus();
               }}
               className="p-1 text-muted-foreground/60 hover:text-foreground rounded transition-colors cursor-pointer"
-              title="清除输入"
+              title={t("hostCombobox.clearInput", "清除输入")}
             >
               <X className="h-3 w-3" />
             </button>
@@ -266,7 +268,7 @@ export function HostCombobox({
               "p-1 text-muted-foreground hover:text-foreground rounded transition-transform cursor-pointer",
               isOpen && "rotate-180 text-foreground"
             )}
-            title="选择已有或已知主机"
+            title={t("hostCombobox.selectKnown", "选择已有或已知主机")}
           >
             <ChevronDown className="h-3.5 w-3.5" />
           </button>
@@ -278,9 +280,9 @@ export function HostCombobox({
         <div onMouseDown={(e) => e.preventDefault()} className="absolute top-full left-0 mt-1.5 w-full z-50 rounded-lg border border-border/80 bg-popover/95 backdrop-blur-md shadow-xl overflow-hidden py-1 max-h-64 overflow-y-auto animate-in fade-in-50 zoom-in-95 duration-100">
           {filteredOptions.length === 0 ? (
             <div className="px-3 py-2.5 text-center text-xs text-muted-foreground">
-              {mode === "alias" ? (tunnelHosts.length === 0 ? "暂无其他可引用的 Host 别名 (请先在侧边栏添加其他 Host 隧道)" : "未找到匹配的 Host 别名") : "未找到匹配的主机地址"}
+              {mode === "alias" ? (tunnelHosts.length === 0 ? t("hostCombobox.noAliases", "暂无其他可引用的 Host 别名 (请先在侧边栏添加其他 Host 隧道)") : t("hostCombobox.noMatchAlias", "未找到匹配的 Host 别名")) : t("hostCombobox.noMatchHost", "未找到匹配的主机地址")}
               <div className="text-[11px] text-muted-foreground/70 mt-0.5">
-                直接按回车或失焦即可使用当前输入: <strong className="font-mono text-foreground">{value}</strong>
+                {t("hostCombobox.customInputHint", "直接按回车或失焦即可使用当前输入:")} <strong className="font-mono text-foreground">{value}</strong>
               </div>
             </div>
           ) : (
@@ -290,7 +292,7 @@ export function HostCombobox({
                 <div className="py-1">
                   <div className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                     <Server className="h-3 w-3 text-primary" />
-                    <span>{mode === "alias" ? "~/.ssh/config 中的 Host 别名" : "已有主机地址"}</span>
+                    <span>{mode === "alias" ? t("hostCombobox.sshConfigAlias", "~/.ssh/config 中的 Host 别名") : t("hostCombobox.existingHosts", "已有主机地址")}</span>
                     <span className="text-[9px] font-normal text-muted-foreground/70">({grouped.tunnelsGroup.length})</span>
                   </div>
                   {grouped.tunnelsGroup.map((opt) => {
@@ -338,7 +340,7 @@ export function HostCombobox({
                 <div className="py-1">
                   <div className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                     <Globe className="h-3 w-3 text-sky-500" />
-                    <span>系统已知主机 (known_hosts)</span>
+                    <span>{t("hostCombobox.knownHosts", "系统已知主机 (known_hosts)")}</span>
                     <span className="text-[9px] font-normal text-muted-foreground/70">({grouped.knownGroup.length})</span>
                   </div>
                   {grouped.knownGroup.map((opt) => {
@@ -379,7 +381,7 @@ export function HostCombobox({
                 <div className="py-1">
                   <div className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                     <Laptop className="h-3 w-3 text-emerald-500" />
-                    <span>常用回环及网络地址</span>
+                    <span>{t("hostCombobox.commonHosts", "常用回环及网络地址")}</span>
                   </div>
                   {grouped.commonGroup.map((opt) => {
                     globalIndexCounter++;

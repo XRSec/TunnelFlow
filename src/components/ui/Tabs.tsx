@@ -2,6 +2,7 @@ import React from "react";
 import { Network, Zap, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConfigurationTab } from "@/types/tunnel";
+import { useTranslation } from "react-i18next";
 
 interface TabsProps {
   activeTab: ConfigurationTab;
@@ -10,12 +11,13 @@ interface TabsProps {
 }
 
 export function Tabs({ activeTab, onChange, isGeneralConfig = false }: TabsProps) {
+  const { t } = useTranslation();
   const tabs: { id: ConfigurationTab; label: string; icon: React.ReactNode }[] = [
     ...(!isGeneralConfig
-      ? [{ id: "general" as const, label: "通用", icon: <Network className="h-3.5 w-3.5" /> }]
+      ? [{ id: "general" as const, label: t("tabs.general", "通用"), icon: <Network className="h-3.5 w-3.5" /> }]
       : []),
-    { id: "connection" as const, label: "连接", icon: <Zap className="h-3.5 w-3.5" /> },
-    { id: "advanced" as const, label: "高级", icon: <SlidersHorizontal className="h-3.5 w-3.5" /> },
+    { id: "connection" as const, label: t("tabs.connection", "连接"), icon: <Zap className="h-3.5 w-3.5" /> },
+    { id: "advanced" as const, label: t("tabs.advanced", "高级"), icon: <SlidersHorizontal className="h-3.5 w-3.5" /> },
   ];
 
   return (

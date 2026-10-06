@@ -11,7 +11,8 @@
     "checking": "正在检查...",
     "upToDate": "当前已是最新版本",
     "langSystem": "跟随系统",
-    "autoCheckUpdate": "自动检测更新"
+    "autoCheckUpdate": "自动检测更新",
+    "checkFailed": "检查更新失败"
   },
   "auto_1000": "主机名 (Alias)",
   "auto_1001": "用户 (User)",
@@ -323,5 +324,63 @@
   "auto_2264": "连接失败",
   "auto_2265": "已断开",
   "auto_2266": "隧道",
-  "auto_2267": "没有选中的主机隧道"
+  "auto_2267": "没有选中的主机隧道",
+  "tabs": {
+    "general": "通用",
+    "connection": "连接",
+    "advanced": "高级"
+  },
+  "header": {
+    "connectedWithForwards": "已连接 · {{count}} 条转发",
+    "disconnectedWithForwards": "未连接 · {{count}} 条转发"
+  },
+  "notifications": {
+    "connectedMsg": "{{name}} 已成功连接",
+    "errorMsg": "{{name}} 连接发生错误",
+    "disconnectedMsg": "{{name}} 已断开连接"
+  },
+  "common": {
+    "newHostPrefix": "新主机",
+    "collapse": "收起",
+    "expand": "展开",
+    "addRemark": "添加备注...",
+    "remark": "备注"
+  },
+  "sourceEditor": {
+    "title": "源码模式 (SSH Config)"
+  },
+  "hostCombobox": {
+    "placeholderAlias": "选择或输入 ~/.ssh/config 主机别名...",
+    "placeholderHost": "输入或选择主机地址 (IP / 域名)...",
+    "loopback": "本地环回 (Loopback)",
+    "localDomain": "本机域名",
+    "allInterfaces": "所有网络接口",
+    "ipv6Loopback": "IPv6 本地环回",
+    "existingAliases": "已有别名",
+    "existingHosts": "已有主机地址",
+    "knownHosts": "系统已知主机 (known_hosts)",
+    "clearInput": "清除输入",
+    "customInputHint": "直接按回车或失焦即可使用当前输入:",
+    "noAliases": "暂无其他可引用的 Host 别名 (请先在侧边栏添加其他 Host 隧道)",
+    "noMatchAlias": "未找到匹配的 Host 别名",
+    "noMatchHost": "未找到匹配的主机地址",
+    "sshConfigAlias": "~/.ssh/config 中的 Host 别名",
+    "selectKnown": "选择已有或已知主机",
+    "commonHosts": "常用回环及网络地址"
+  },
+  "import": {
+    "importedPrefix": "导入",
+    "parseError": "无法解析导入的 SSH Config",
+    "invalidCommand": "无法解析提供的命令，请检查格式。",
+    "missingHost": "未指定主机地址"
+  },
+  "generalTab": {
+    "localPort": "本地 :{{port}}"
+  },
+  "advancedTab": {
+    "globalDefault": "全局 ({{val}})",
+    "default": "默认 ({{val}})",
+    "globalDefaultPlaceholder": "全局: {{val}}",
+    "defaultPlaceholder": "默认: {{val}}"
+  }
 }

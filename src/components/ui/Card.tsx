@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import React, { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,7 @@ interface ConfigurationCardProps {
 }
 
 export function ConfigurationCard({
+
  title,
  icon,
  headerAction,
@@ -25,6 +27,7 @@ export function ConfigurationCard({
  children,
  className,
 }: ConfigurationCardProps) {
+ const { t } = useTranslation();
  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
  return (
@@ -56,7 +59,7 @@ export function ConfigurationCard({
  <button
  type="button"
  className="rounded-md p-1 text-muted-foreground hover:bg-muted/70 hover:text-foreground transition-colors"
- aria-label={isExpanded ? "收起" : "展开"}
+ aria-label={isExpanded ? t("common.collapse", "收起") : t("common.expand", "展开")}
  >
  {isExpanded ? (
  <ChevronDown className="h-4 w-4" />

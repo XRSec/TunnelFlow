@@ -136,7 +136,7 @@ export function ImportCommandModal({
       const name = host.includes("@") ? host.split("@")[1] : host;
       const newTunnel: Tunnel = {
         id: generateUUID(),
-        name: `导入-${name}`,
+        name: `${t("import.importedPrefix", "导入")}-${name}`,
         host,
         port,
         auto_connect: false,

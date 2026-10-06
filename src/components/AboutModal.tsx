@@ -71,10 +71,10 @@ export function AboutModal({
         onCheckUpdate(); // Trigger parent to open update modal
         onClose(); // Close this modal
       } else {
-        setUpToDateMsg("当前已是最新版本");
+        setUpToDateMsg(t("about.upToDate", "当前已是最新版本"));
       }
     } catch (e) {
-      setUpToDateMsg("检查更新失败: " + String(e));
+      setUpToDateMsg(t("about.checkFailed", "检查更新失败") + ": " + String(e));
     } finally {
       setCheckingUpdate(false);
     }
@@ -85,7 +85,7 @@ export function AboutModal({
       <div className="relative w-full max-w-[340px] sm:max-w-md w-full overflow-hidden rounded-xl border border-border bg-card shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between border-b border-border/40 px-5 py-3">
           <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            关于
+            {t("about.title", "关于")}
           </h2>
           <button
             onClick={onClose}
@@ -106,9 +106,8 @@ export function AboutModal({
             <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded-full mt-1">v{version}</span>
           </div>
 
-          <p className="text-xs text-muted-foreground text-center mt-1 mb-2">
-            现代化的跨平台 SSH 隧道管理器。<br/>
-            本地、远程、动态端口转发，SSH Config 双向同步。
+          <p className="text-xs text-muted-foreground text-center mt-1 mb-2 whitespace-pre-wrap leading-relaxed">
+            {t("about.description", "现代化的跨平台 SSH 隧道管理器。本地、远程、动态端口转发，SSH Config 双向同步。")}
           </p>
 
           <div className="w-full h-px bg-border/50 my-2" />
@@ -177,7 +176,7 @@ export function AboutModal({
               className="text-xs h-8 w-full flex items-center justify-center gap-1.5"
             >
               {checkingUpdate ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-              {checkingUpdate ? "正在检查..." : "检查更新"}
+              {checkingUpdate ? t("about.checking", "正在检查...") : t("about.checkUpdate", "检查更新")}
             </Button>
             {upToDateMsg && (
               <span className="text-[10px] text-center text-muted-foreground animate-in fade-in">{upToDateMsg}</span>

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import React, { useState, useRef, useEffect } from "react";
 import { FileText, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -8,7 +9,8 @@ interface ExpandableRemarkProps {
   placeholder?: string;
 }
 
-export function ExpandableRemark({ value, onChange, placeholder = "添加备注..." }: ExpandableRemarkProps) {
+export function ExpandableRemark({ value, onChange, placeholder }: ExpandableRemarkProps) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [tempVal, setTempVal] = useState(value || "");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -52,7 +54,7 @@ export function ExpandableRemark({ value, onChange, placeholder = "添加备注.
         {value ? (
           <span className="text-[10px] font-medium truncate max-w-[120px]">{value}</span>
         ) : (
-          <span className="text-[10px] font-medium">备注</span>
+          <span className="text-[10px] font-medium">{t("common.remark", "备注")}</span>
         )}
       </button>
     );

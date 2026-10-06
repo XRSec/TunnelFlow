@@ -3,15 +3,16 @@
   "common.source": "Source",
   "about": {
     "title": "About",
-    "description": "Modern cross-platform SSH tunnel manager.\nLocal, remote, dynamic port forwarding, SSH Config two-way sync.",
+    "description": "Modern cross-platform SSH tunnel manager. Local, remote, and dynamic port forwarding with bidirectional SSH config sync.",
     "autostart": "Launch at Login",
     "autoUpdate": "Auto check for updates",
     "language": "Language",
-    "checkUpdate": "Check for updates",
+    "checkUpdate": "Check for Updates",
     "checking": "Checking...",
-    "upToDate": "Currently up to date",
+    "upToDate": "Current version is up to date",
     "langSystem": "Auto",
-    "autoCheckUpdate": "Auto Check Updates"
+    "autoCheckUpdate": "Auto Check Updates",
+    "checkFailed": "Failed to check for updates"
   },
   "auto_1000": "Hostname (Alias)",
   "auto_1001": "User",
@@ -323,5 +324,63 @@
   "auto_2264": "Connection Failed",
   "auto_2265": "Disconnected",
   "auto_2266": "Tunnel",
-  "auto_2267": "No host tunnel selected"
+  "auto_2267": "No host tunnel selected",
+  "tabs": {
+    "general": "General",
+    "connection": "Connection",
+    "advanced": "Advanced"
+  },
+  "header": {
+    "connectedWithForwards": "Connected · {{count}} forwards",
+    "disconnectedWithForwards": "Disconnected · {{count}} forwards"
+  },
+  "notifications": {
+    "connectedMsg": "{{name}} connected successfully",
+    "errorMsg": "{{name}} connection error",
+    "disconnectedMsg": "{{name}} disconnected"
+  },
+  "common": {
+    "newHostPrefix": "New-Host",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "addRemark": "Add remark...",
+    "remark": "Remark"
+  },
+  "sourceEditor": {
+    "title": "Source Mode (SSH Config)"
+  },
+  "hostCombobox": {
+    "placeholderAlias": "Select or enter host alias...",
+    "placeholderHost": "Enter IP / hostname...",
+    "loopback": "Loopback",
+    "localDomain": "Local Domain",
+    "allInterfaces": "All Interfaces",
+    "ipv6Loopback": "IPv6 Loopback",
+    "existingAliases": "Existing Aliases",
+    "existingHosts": "Existing Hosts",
+    "knownHosts": "Known Hosts (~/.ssh/known_hosts)",
+    "clearInput": "Clear input",
+    "customInputHint": "Press Enter or blur to use current input:",
+    "noAliases": "No other host aliases found (please add other host tunnels in the sidebar first)",
+    "noMatchAlias": "No matching host alias found",
+    "noMatchHost": "No matching host address found",
+    "sshConfigAlias": "Host aliases in ~/.ssh/config",
+    "selectKnown": "Select existing or known host",
+    "commonHosts": "Common Loopback & Network Addresses"
+  },
+  "import": {
+    "importedPrefix": "Import",
+    "parseError": "Failed to parse imported SSH Config",
+    "invalidCommand": "Failed to parse provided command. Please check the format.",
+    "missingHost": "Host address not specified"
+  },
+  "generalTab": {
+    "localPort": "Local :{{port}}"
+  },
+  "advancedTab": {
+    "globalDefault": "Global ({{val}})",
+    "default": "Default ({{val}})",
+    "globalDefaultPlaceholder": "Global: {{val}}",
+    "defaultPlaceholder": "Default: {{val}}"
+  }
 }

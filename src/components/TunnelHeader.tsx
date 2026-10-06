@@ -57,7 +57,7 @@ export function TunnelHeader({
  <div className="flex items-center gap-1.5">
  <StatusIndicator state={status} />
  <span className={cn("text-[11px]", lowerStatus === "error" && "text-red-500 font-medium")}>
- {isConnected ? `已连接 · ${activeForwardsCount} 条转发` : isConnecting ? t("auto_2049") : lowerStatus === "error" ? t("auto_2050") : `未连接 · ${activeForwardsCount} 条转发`}
+ {isConnected ? t("header.connectedWithForwards", { count: activeForwardsCount, defaultValue: `已连接 · ${activeForwardsCount} 条转发` }) : isConnecting ? t("auto_2049") : lowerStatus === "error" ? t("auto_2050") : t("header.disconnectedWithForwards", { count: activeForwardsCount, defaultValue: `未连接 · ${activeForwardsCount} 条转发` })}
  </span>
  </div>
  </div>

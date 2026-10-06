@@ -156,7 +156,7 @@ export function AdvancedTab({
                       <div className="flex-1 min-w-[200px] flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
  {opt.type === "choice" && opt.candidates.length > 0 ? <Select value={currentVal} onChange={e => handleDirectiveChange(opt.key, e.target.value)} className={cn("h-7 text-xs font-mono py-0", isCust && "border-primary/50 text-primary font-medium")}>
  <option value="">
- {hasGeneral ? `全局 (${effectiveDefault})` : `默认 (${effectiveDefault})`}
+ {hasGeneral ? t("advancedTab.globalDefault", { val: effectiveDefault, defaultValue: `全局 (${effectiveDefault})` }) : t("advancedTab.default", { val: effectiveDefault, defaultValue: `默认 (${effectiveDefault})` })}
  </option>
  {opt.candidates.map(c => <option key={c} value={c}>
  {c}
@@ -164,7 +164,7 @@ export function AdvancedTab({
  {currentVal && !opt.candidates.includes(currentVal) && <option value={currentVal}>
  {currentVal}{t("auto_2183")}</option>}
  </Select> : <div className="relative flex-1 flex items-center">
- <Input value={currentVal} onChange={e => handleDirectiveChange(opt.key, e.target.value)} placeholder={hasGeneral ? `全局: ${effectiveDefault}` : `默认: ${effectiveDefault}`} className={cn("h-7 text-xs font-mono pr-6", isCust && "border-primary/50 text-primary font-medium")} />
+ <Input value={currentVal} onChange={e => handleDirectiveChange(opt.key, e.target.value)} placeholder={hasGeneral ? t("advancedTab.globalDefaultPlaceholder", { val: effectiveDefault, defaultValue: `全局: ${effectiveDefault}` }) : t("advancedTab.defaultPlaceholder", { val: effectiveDefault, defaultValue: `默认: ${effectiveDefault}` })} className={cn("h-7 text-xs font-mono pr-6", isCust && "border-primary/50 text-primary font-medium")} />
  {currentVal && <button type="button" onClick={() => handleResetDirective(opt.key)} className="absolute right-1.5 p-0.5 text-muted-foreground/60 hover:text-foreground cursor-pointer rounded" title={t("auto_2184")}>
  <X className="h-3 w-3" />
  </button>}

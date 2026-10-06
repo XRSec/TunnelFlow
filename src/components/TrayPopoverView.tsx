@@ -244,7 +244,7 @@ export function TrayPopoverView() {
               <Power className="w-[14px] h-[14px] opacity-75" />
               <span>{t("auto_2244")}</span>
             </div>
-            <span className="text-[#8e8e93] font-sans text-[11px]">{t("auto_1041")}</span>
+            <span className="text-[#8e8e93] font-sans text-[11px]">"⌘Q"</span>
           </button>
         </div>
       </div>

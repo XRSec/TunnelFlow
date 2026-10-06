@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Tunnel } from "@/types/tunnel";
 import { ALL_SSH_DIRECTIVES } from "@/lib/directiveCatalog";
@@ -60,6 +61,7 @@ const tokenizeLine = (line: string) => {
 };
 
 export function SourceEditor({ tunnel, onChange, onSave, generalConfig }: SourceEditorProps) {
+  const { t } = useTranslation();
   const [text, setText] = useState("");
   
   // Undo/Redo stacks
@@ -508,7 +510,7 @@ export function SourceEditor({ tunnel, onChange, onSave, generalConfig }: Source
     <div ref={containerRef} className="flex flex-col h-full bg-card rounded-xl overflow-hidden font-mono text-sm border border-border relative">
       <div className="flex justify-between items-center p-3 border-b border-border/50 bg-muted/10 shrink-0">
         <h3 className="text-muted-foreground font-semibold flex items-center gap-2 text-xs">
-          <Code2 className="w-4 h-4" /> 源码模式 (SSH Config)
+          <Code2 className="w-4 h-4" /> {t("sourceEditor.title", "源码模式 (SSH Config)")}
         </h3>
         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/60 font-sans"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500/80"></span><span>实时同步</span></div>
       </div>
