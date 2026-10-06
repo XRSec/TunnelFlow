@@ -1,6 +1,6 @@
 [package]
 name = "tunnelflow"
-version = "0.1.1"
+version = "0.1.2"
 description = "TunnelFlow - Cross-platform SSH Tunnel Manager"
 authors = ["xr"]
 edition = "2021"
