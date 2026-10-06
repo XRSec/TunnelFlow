@@ -11,6 +11,13 @@ async function checkNotSymlink(filePath) {
     if (stats.isSymbolicLink()) {
       throw new Error(`Path ${filePath} is a symbolic link. Symlinks are not allowed for security reasons.`);
     }
+    const canonicalPath = await fs.realpath(filePath);
+    const rootPath = await fs.realpath(process.cwd());
+    
+    const rel = path.relative(rootPath, canonicalPath);
+    if (rel.startsWith('..') || path.isAbsolute(rel)) {
+      throw new Error(`Path ${filePath} resolves outside the project root directory. Traversal is not allowed.`);
+    }
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
   }

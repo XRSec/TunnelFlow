@@ -1,5 +1,7 @@
 # TunnelFlow ⚡
 
+[English](../README.md) | [简体中文](README.md)
+
 > **Next-Generation Cross-Platform SSH Tunnel & Port Forwarding Manager**  
 > *Designed for macOS, Windows, and Linux.*
 
@@ -32,6 +34,7 @@
 ## 🌟 核心亮点 (Key Features)
 
 - 🚀 **极轻量原生体验**：基于 Tauri v2 + Rust 后端，安装包仅约 **8MB**，空闲内存占用仅 **~35MB**（相比 Electron 节省 80%+ 内存）。
+- 🌍 **Bilingual i18n support (中英双语即时切换与原生菜单适配)**：原生应用菜单与 UI 实时联动切换。
 - 🔄 **无损双向同步 `~/.ssh/config`**：Rust 原生无损语法解析器，严格保留注释（`# ...`）、缩进格式与未知自定义指令。提供可视化表单与**双向源码编辑器**（支持 ⌘S / Ctrl+S 实时解析并即时保存）。
 - 🛡️ **全模式端口转发**：
   - **动态端口转发 (Dynamic, `-D`)**：一键生成本地 SOCKS5 代理。
@@ -45,7 +48,7 @@
   - 动态托盘菜单：实时展示全部分组中当前活跃的端口转发（包含本地端口与目标地址）、一键快速连接/断开、快速呼出主窗口。
 - 🗂️ **分组管理与拖拽排序**：
   - 支持创建/折叠多个分组；
-  - 支持列表内自由平滑拖拽排序及跨分组拖拽转移，状态自动持久化。
+  - **1D vertical geometric drag-and-drop reordering (一维纵向拖拽排序与动效)**：支持列表内自由平滑拖拽排序及跨分组拖拽转移，状态自动持久化。
 - ⚡ **连接弹性与后台守护 (Resilience)**：心跳探测 (`ServerAliveInterval`)、最大重试次数 (`ServerAliveCountMax`)、连接超时 (`ConnectTimeout`) 视觉化配置；后台 SSH 进程生命周期精准守护。
 - 🔑 **无缝密钥发现**：原生动态检索 `~/.ssh/` 密钥与证书，无需手动导入。
 - 📋 **一键剪贴板导入**：任意复制类似 `ssh -N -L 127.0.0.1:8080:10.0.0.1:80 root@vps` 的命令行，TunnelFlow 会自动解析为结构化配置。
@@ -53,6 +56,7 @@
   - **macOS**：原生 Overlay 磨砂标题栏与平滑窗口控制。
   - **Windows**：原生 WebView2 驱动，完美兼容。
   - **Linux**：GTK3 WebKit 渲染。
+- 🔄 **应用内自动更新 (Auto Updater)**：无缝静默更新，保持最新版本。
 
 ---
 
@@ -109,7 +113,7 @@ pnpm install
 
 ```bash
 pnpm dev
-# 浏览器访问 http://localhost:1420
+# 浏览器访问 http://localhost:1421
 ```
 
 ### 3. 本地开发运行 (桌面端模式)
