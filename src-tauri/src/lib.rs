@@ -89,6 +89,32 @@ pub fn run() {
                     &quit,
                 ];
 
+                let undo = PredefinedMenuItem::undo(app, None).unwrap();
+                let redo = PredefinedMenuItem::redo(app, None).unwrap();
+                let edit_sep1 = PredefinedMenuItem::separator(app).unwrap();
+                let cut = PredefinedMenuItem::cut(app, None).unwrap();
+                let copy = PredefinedMenuItem::copy(app, None).unwrap();
+                let paste = PredefinedMenuItem::paste(app, None).unwrap();
+                let edit_sep2 = PredefinedMenuItem::separator(app).unwrap();
+                let select_all = PredefinedMenuItem::select_all(app, None).unwrap();
+
+                let edit_menu = Submenu::with_id_and_items(
+                    app,
+                    "edit_menu",
+                    "Edit",
+                    true,
+                    &[
+                        &undo,
+                        &redo,
+                        &edit_sep1,
+                        &cut,
+                        &copy,
+                        &paste,
+                        &edit_sep2,
+                        &select_all,
+                    ],
+                ).unwrap();
+
                 if let Ok(app_menu) = Submenu::with_id_and_items(
                     app,
                     "app_menu",
@@ -96,7 +122,7 @@ pub fn run() {
                     true,
                     items,
                 ) {
-                    if let Ok(menu) = Menu::with_items(app, &[&app_menu]) {
+                    if let Ok(menu) = Menu::with_items(app, &[&app_menu, &edit_menu]) {
                         let _ = app.set_menu(menu);
                     }
                 }
