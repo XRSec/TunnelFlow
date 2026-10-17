@@ -114,8 +114,8 @@ pub fn update_tray_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error
 
     menu.append(&quit_i)?;
 
-    if let Some(tray) = app.tray_by_id("main-tray") {
-        // let _ = tray.set_menu(Some(menu)); // Disabled for native popover
+    if let Some(_tray) = app.tray_by_id("main-tray") {
+        // let _ = _tray.set_menu(Some(menu)); // Disabled for native popover
     }
     Ok(())
 }
