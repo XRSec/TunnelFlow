@@ -1,3 +1,12 @@
+/**
+ * Status Indicator & Badge Component
+ *
+ * 状态呼吸与微动效参考自 Claude Design System (CDS / open-claude-ui, MIT License by Caho1):
+ * - connecting: 2.4s 陶土/琥珀明度呼吸 (animate-clay-breathe)
+ * - connected: 1.2s 环形扩展微脉冲 (animate-dot-pulse / Ping)
+ * - disconnected: 克制的低饱和度微透明表面
+ */
+
 import React from "react";
 import { cn } from "@/lib/utils";
 import { TunnelState } from "@/types/tunnel";
@@ -15,9 +24,28 @@ export function StatusIndicator({
   state?: TunnelState;
   className?: string;
 }) {
-  const dotColors: Record<TunnelState, string> = {
-    connected: "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] dark:bg-emerald-400 dark:shadow-[0_0_8px_rgba(52,211,153,0.8)]",
-    connecting: "bg-amber-400 animate-pulse shadow-[0_0_6px_rgba(251,191,36,0.6)] dark:bg-amber-300 dark:shadow-[0_0_6px_rgba(252,211,77,0.6)]",
+  if (state === "connecting") {
+    return (
+      <span
+        className={cn(
+          "inline-block h-2 w-2 rounded-full bg-amber-400 dark:bg-amber-300 shadow-[0_0_6px_rgba(251,191,36,0.6)] animate-clay-breathe",
+          className
+        )}
+        aria-label="Connecting"
+      />
+    );
+  }
+
+  if (state === "connected") {
+    return (
+      <span className={cn("relative inline-flex h-2 w-2 items-center justify-center", className)}>
+        <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60 animate-ping" />
+        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.7)] dark:bg-emerald-400" />
+      </span>
+    );
+  }
+
+  const dotColors: Record<Exclude<TunnelState, "connecting" | "connected">, string> = {
     error: "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)] dark:bg-red-400 dark:shadow-[0_0_6px_rgba(248,113,113,0.6)]",
     disconnected: "bg-neutral-400/50 dark:bg-neutral-500/50",
   };

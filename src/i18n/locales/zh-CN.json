@@ -1,6 +1,12 @@
 {
   "common.visual": "可视化",
   "common.source": "源码",
+  "status": {
+    "connected": "已连接",
+    "connecting": "连接中...",
+    "disconnected": "已断开",
+    "error": "连接异常"
+  },
   "about": {
     "title": "关于",
     "description": "现代化的跨平台 SSH 隧道管理器。\n本地、远程、动态端口转发，SSH Config 双向同步。",

@@ -1,3 +1,11 @@
+/**
+ * Button Component
+ *
+ * 物理触觉参考自 Claude Design System (CDS / open-claude-ui, MIT License):
+ * - active:scale-[0.98] 物理微形变反馈
+ * - 120ms/150ms 瞬时咬合与弹簧过渡
+ * - 严格遵循单闭合边框原则，减轻容器内多层边框叠加
+ */
 import React from "react";
 import { cn } from "@/lib/utils";
 
@@ -9,11 +17,11 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "secondary", size = "sm", children, ...props }, ref) => {
     const variants = {
-      primary: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs",
-      secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border/60",
-      outline: "border border-border bg-transparent hover:bg-muted/70 text-foreground",
+      primary: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs active:shadow-none",
+      secondary: "bg-secondary/70 text-secondary-foreground hover:bg-secondary border border-border/50 shadow-2xs",
+      outline: "border border-border/70 bg-transparent hover:bg-muted/70 text-foreground",
       ghost: "hover:bg-muted/60 text-muted-foreground hover:text-foreground",
-      danger: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-xs",
+      danger: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-xs active:shadow-none",
     };
 
     const sizes = {
@@ -27,7 +35,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          "inline-flex items-center justify-center font-medium transition-colors select-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
+          "inline-flex items-center justify-center font-medium select-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
+          "transition-all duration-150 ease-[var(--cds-btn-spring,cubic-bezier(0.32,0.72,0,1))] active:scale-[0.98]",
           variants[variant],
           sizes[size],
           className

@@ -39,18 +39,18 @@ function playTone(freq: number, type: OscillatorType, duration: number, vol: num
     const ctx = getAudioContext();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    
+
     osc.type = type;
     osc.frequency.setValueAtTime(freq, ctx.currentTime);
-    
+
     // ADSR Envelope to prevent clicks/pops
     gain.gain.setValueAtTime(0, ctx.currentTime);
     gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + attack);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-    
+
     osc.connect(gain);
     gain.connect(ctx.destination);
-    
+
     osc.onended = () => {
       try {
         osc.disconnect();

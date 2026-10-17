@@ -18,6 +18,7 @@ interface TitleBarProps {
   onImportCommand?: () => void;
   activeTunnelName?: string;
   connectedCount?: number;
+  connectingCount?: number;
   isSidebarCollapsed?: boolean;
   onToggleSidebar?: () => void;
 }
@@ -28,6 +29,7 @@ export function TitleBar({
   onImportCommand,
   activeTunnelName,
   connectedCount = 0,
+  connectingCount = 0,
   isSidebarCollapsed,
   onToggleSidebar,
   viewMode,
@@ -61,7 +63,12 @@ export function TitleBar({
 
         {connectedCount > 0 && <div className="hidden sm:flex items-center gap-1.5 ml-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 animate-pulse" />
-            <span>{connectedCount}{t("auto_2005")}</span>
+            <span>{connectedCount} {t("status.connected", "已连接")}</span>
+          </div>}
+
+        {connectingCount > 0 && <div className="hidden sm:flex items-center gap-1.5 ml-2 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 dark:bg-amber-400 animate-clay-breathe" />
+            <span>{connectingCount} {t("status.connecting", "连接中...")}</span>
           </div>}
       </div>
 

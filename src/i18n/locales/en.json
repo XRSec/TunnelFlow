@@ -1,6 +1,12 @@
 {
   "common.visual": "Visual",
   "common.source": "Source",
+  "status": {
+    "connected": "Connected",
+    "connecting": "Connecting...",
+    "disconnected": "Disconnected",
+    "error": "Error"
+  },
   "about": {
     "title": "About",
     "description": "Modern cross-platform SSH tunnel manager. Local, remote, and dynamic port forwarding with bidirectional SSH config sync.",

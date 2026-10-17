@@ -5,6 +5,7 @@ import { Tunnel, GroupDivider, TunnelRuntimeStatus, TunnelState } from "@/types/
 import { PlatformIcon } from "@/components/ui/PlatformIcon";
 import { StatusIndicator } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { ScrollFadeContainer } from "@/components/ui/ScrollFadeContainer";
 import { cn } from "@/lib/utils";
 import { handleWindowDragOrMaximize, isMacOS } from "@/lib/window";
 const DND_TUNNEL_MIME = "application/x-tunnelflow-tunnel";
@@ -620,7 +621,7 @@ export function Sidebar({
       </div>
 
       {/* Tunnel List */}
-      <div className="flex-1 overflow-y-auto px-2 space-y-2">
+      <ScrollFadeContainer orientation="vertical" fadeSize={24} className="flex-1 px-2 space-y-2">
         {/* Global Config (Host *) */}
         {generalConfig && <div onClick={() => onSelect(generalConfig.id)} className={cn("flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs transition-all cursor-pointer select-none", selectedId === generalConfig.id ? "bg-primary text-primary-foreground shadow-xs font-medium" : "hover:bg-muted/60 text-foreground")}>
             <div className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-md border", selectedId === generalConfig.id ? "border-primary-foreground/30 bg-primary-foreground/15 text-primary-foreground" : "border-border/70 bg-card text-muted-foreground")}>
@@ -659,7 +660,7 @@ export function Sidebar({
           </div>}
 
         {regularTunnels.length === 0 && !generalConfig && <div data-group-name={UNGROUPED_DROP_KEY} className={cn("py-8 text-center text-xs text-muted-foreground rounded-sm transition-colors", dropGroup === UNGROUPED_DROP_KEY ? "bg-primary/10 border border-primary/50" : "")}>{t("auto_2037")}</div>}
-      </div>
+      </ScrollFadeContainer>
 
       {/* Bottom Action Bar */}
       <div className="flex items-center justify-between border-t border-border/70 px-3 py-2 text-muted-foreground bg-muted/20">

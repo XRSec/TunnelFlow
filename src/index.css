@@ -113,3 +113,78 @@
 button, input, select, textarea, a, .drag-exclude, [data-no-drag] {
   -webkit-app-region: no-drag;
 }
+
+/* ==========================================================================
+   Claude Design System (CDS) - Motion Physics & Optical Ergonomics
+   Reference: open-claude-ui (MIT License)
+   ========================================================================== */
+
+:root {
+  --cds-clay: #d97757;
+  --cds-clay-hover: #cc5a36;
+  --cds-clay-light: #fbf3ef;
+  --cds-btn-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --cds-scroll-fade-size: 24px;
+  --cds-scroll-fade-top: 0px;
+  --cds-scroll-fade-bottom: 24px;
+}
+
+/* 1. 陶土明度呼吸指示灯 (2.4s) */
+@keyframes dframe-clay-breathe {
+  0%, 100% {
+    filter: brightness(0.96);
+    transform: scale(0.92);
+  }
+  50% {
+    filter: brightness(1.1);
+    transform: scale(1.08);
+  }
+}
+
+/* 2. 实时活动脉冲灯 (1.2s) */
+@keyframes dframe-dot-pulse {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+/* 3. 静默波浪三点跳跃 (1.9s) */
+@keyframes timeline-quiet-dot {
+  0%, 8%   { opacity: 0.2; transform: translateY(1.5px); }
+  22%      { opacity: 1; transform: translateY(-2px); }
+  36%, 70% { opacity: 1; transform: translateY(0); }
+  90%, 100%{ opacity: 0.2; transform: translateY(0); }
+}
+
+/* 4. 骨架屏高级倾斜扫光 (1.8s) */
+@keyframes cds-skeleton-sweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* 5. 动效工具类 */
+.animate-clay-breathe {
+  animation: dframe-clay-breathe 2.4s infinite ease-in-out;
+}
+
+.animate-dot-pulse {
+  animation: dframe-dot-pulse 1.2s infinite ease-in-out;
+}
+
+.animate-skeleton-sweep {
+  animation: cds-skeleton-sweep 1.8s infinite cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 6. 暗色模式视网膜字重逆补偿 (杜绝暗色文字视觉发胀) */
+.dark .font-medium {
+  font-variation-settings: "wght" 480;
+}
+.dark .font-semibold {
+  font-variation-settings: "wght" 580;
+}
+

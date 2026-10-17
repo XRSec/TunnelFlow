@@ -719,6 +719,7 @@ export function App() {
     }
   };
   const connectedCount = Object.values(runtimeStatus).filter(s => s.state?.toLowerCase() === "connected").length;
+  const connectingCount = Object.values(runtimeStatus).filter(s => s.state?.toLowerCase() === "connecting").length;
   return <div className="relative h-full w-full overflow-hidden">
       {windowMode === "mini" ? <MiniModeView onAddGroup={handleAddGroup} tunnels={tunnels} groups={groups} runtimeStatus={runtimeStatus} onStartTunnel={handleConnect} onStopTunnel={handleDisconnect} onRefreshTunnels={async () => {
       const tList = await fetchTunnels();
@@ -729,7 +730,7 @@ export function App() {
       localStorage.setItem("tunnelflow:window_mode", "full");
     }} /> : <div className="flex h-full w-full flex-col overflow-hidden bg-background text-foreground antialiased font-sans">
       {/* 1. Global Cross-Platform TitleBar */}
-      <TitleBar theme={theme} onToggleTheme={toggleTheme} onOpenKeysModal={() => setIsKeysModalOpen(true)} onImportCommand={() => setIsImportModalOpen(true)} activeTunnelName={currentTunnel?.name} connectedCount={connectedCount} isSidebarCollapsed={isSidebarCollapsed} onToggleSidebar={toggleSidebar} viewMode={viewMode} onViewModeChange={setViewMode} onOpenAboutModal={() => setIsAboutModalOpen(true)} />
+      <TitleBar theme={theme} onToggleTheme={toggleTheme} onOpenKeysModal={() => setIsKeysModalOpen(true)} onImportCommand={() => setIsImportModalOpen(true)} activeTunnelName={currentTunnel?.name} connectedCount={connectedCount} connectingCount={connectingCount} isSidebarCollapsed={isSidebarCollapsed} onToggleSidebar={toggleSidebar} viewMode={viewMode} onViewModeChange={setViewMode} onOpenAboutModal={() => setIsAboutModalOpen(true)} />
 
       {/* 2. Workspace Body */}
       <div className="flex flex-1 min-h-0 w-full overflow-hidden">
