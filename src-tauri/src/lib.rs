@@ -164,22 +164,110 @@ pub fn run() {
                             if tray_win.is_visible().unwrap_or(false) {
                                 let _ = tray_win.hide();
                             } else {
-                                let monitor = tray_win.current_monitor().unwrap_or_default().or_else(|| tray_win.primary_monitor().unwrap_or_default());
-                                let scale_factor = monitor.as_ref().map(|m| m.scale_factor()).unwrap_or(1.0);
-                                
+                                let monitors = tray_win.available_monitors().unwrap_or_default();
+                                let (icon_px, icon_py) = match rect.position {
+                                    tauri::Position::Physical(p) => (p.x, p.y),
+                                    tauri::Position::Logical(l) => (l.x as i32, l.y as i32),
+                                };
+                                let (icon_pw, icon_ph) = match rect.size {
+                                    tauri::Size::Physical(s) => (s.width as i32, s.height as i32),
+                                    tauri::Size::Logical(l) => (l.width as i32, l.height as i32),
+                                };
+                                let icon_center_x = icon_px + icon_pw / 2;
+                                let icon_center_y = icon_py + icon_ph / 2;
+
+                                let target_monitor = monitors
+                                    .iter()
+                                    .find(|m| {
+                                        let m_pos = m.position();
+                                        let m_size = m.size();
+                                        icon_center_x >= m_pos.x
+                                            && icon_center_x < m_pos.x + m_size.width as i32
+                                            && icon_center_y >= m_pos.y
+                                            && icon_center_y < m_pos.y + m_size.height as i32
+                                    })
+                                    .or_else(|| {
+                                        monitors.iter().find(|m| {
+                                            let m_pos = m.position();
+                                            let m_size = m.size();
+                                            let rect_x2 = icon_px + icon_pw;
+                                            let rect_y2 = icon_py + icon_ph;
+                                            let m_x2 = m_pos.x + m_size.width as i32;
+                                            let m_y2 = m_pos.y + m_size.height as i32;
+
+                                            icon_px < m_x2
+                                                && rect_x2 > m_pos.x
+                                                && icon_py < m_y2
+                                                && rect_y2 > m_pos.y
+                                        })
+                                    })
+                                    .or_else(|| {
+                                        monitors.iter().min_by_key(|m| {
+                                            let m_pos = m.position();
+                                            let m_size = m.size();
+                                            let dx = if icon_center_x < m_pos.x {
+                                                m_pos.x - icon_center_x
+                                            } else if icon_center_x > m_pos.x + m_size.width as i32 {
+                                                icon_center_x - (m_pos.x + m_size.width as i32)
+                                            } else {
+                                                0
+                                            };
+                                            let dy = if icon_center_y < m_pos.y {
+                                                m_pos.y - icon_center_y
+                                            } else if icon_center_y > m_pos.y + m_size.height as i32 {
+                                                icon_center_y - (m_pos.y + m_size.height as i32)
+                                            } else {
+                                                0
+                                            };
+                                            dx as i64 * dx as i64 + dy as i64 * dy as i64
+                                        })
+                                    })
+                                    .cloned()
+                                    .or_else(|| tray_win.current_monitor().ok().flatten())
+                                    .or_else(|| tray_win.primary_monitor().ok().flatten());
+
+                                let scale_factor = target_monitor.as_ref().map(|m| m.scale_factor()).unwrap_or(1.0);
+
                                 let icon_pos = rect.position.to_logical::<f64>(scale_factor);
                                 let icon_size = rect.size.to_logical::<f64>(scale_factor);
-                                let win_size = tray_win.outer_size().unwrap_or_default().to_logical::<f64>(scale_factor);
-                                
-                                let mut x = icon_pos.x + (icon_size.width / 2.0) - (win_size.width / 2.0);
+
+                                let win_scale = tray_win.scale_factor().unwrap_or(scale_factor);
+                                let outer_size_logical = tray_win.outer_size().unwrap_or_default().to_logical::<f64>(win_scale);
+                                let win_width = if outer_size_logical.width >= 100.0 && outer_size_logical.width <= 500.0 {
+                                    outer_size_logical.width
+                                } else {
+                                    260.0
+                                };
+                                let win_height = if outer_size_logical.height >= 100.0 && outer_size_logical.height <= 800.0 {
+                                    outer_size_logical.height
+                                } else {
+                                    260.0
+                                };
+
+                                let mut x = icon_pos.x + (icon_size.width / 2.0) - (win_width / 2.0);
                                 let mut y = icon_pos.y + icon_size.height + 4.0;
-                                
-                                if let Some(m) = monitor {
-                                    let m_size = m.size().to_logical::<f64>(scale_factor);
-                                    x = x.clamp(8.0, m_size.width - win_size.width - 8.0);
-                                    y = y.clamp(0.0, m_size.height - win_size.height - 8.0);
+
+                                if let Some(ref m) = target_monitor {
+                                    let m_scale = m.scale_factor();
+                                    let m_pos = m.position().to_logical::<f64>(m_scale);
+                                    let m_size = m.size().to_logical::<f64>(m_scale);
+
+                                    if y + win_height > m_pos.y + m_size.height {
+                                        let candidate_y = icon_pos.y - win_height - 4.0;
+                                        if candidate_y >= m_pos.y {
+                                            y = candidate_y;
+                                        }
+                                    }
+
+                                    let min_x = m_pos.x + 8.0;
+                                    let max_x = (m_pos.x + m_size.width - win_width - 8.0).max(min_x);
+                                    x = x.clamp(min_x, max_x);
+
+                                    let min_y = m_pos.y;
+                                    let max_y = (m_pos.y + m_size.height - win_height - 8.0).max(min_y);
+                                    y = y.clamp(min_y, max_y);
                                 }
-                                
+
                                 let _ = tray_win.set_position(tauri::LogicalPosition::new(x, y));
                                 let _ = tray_win.show();
                                 let _ = tray_win.set_focus();
