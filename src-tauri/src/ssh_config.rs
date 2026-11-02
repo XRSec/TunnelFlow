@@ -187,10 +187,12 @@ pub fn parse_ssh_config(content: &str) -> (Vec<Tunnel>, Vec<GroupDivider>) {
                 let mut val_parts = raw_val.splitn(2, '#');
                 let val = val_parts.next().unwrap_or("").trim();
                 let inline_rmk = val_parts.next().map(|s| s.trim()).filter(|s| !s.is_empty());
-                
+
                 if let Some(rmk) = inline_rmk {
-                    let rmk_map = t.field_remarks.get_or_insert_with(std::collections::HashMap::new);
-                    rmk_map.insert(key.to_string(), rmk.to_string());
+                    if key_lower != "localforward" && key_lower != "remoteforward" && key_lower != "dynamicforward" {
+                        let rmk_map = t.field_remarks.get_or_insert_with(std::collections::HashMap::new);
+                        rmk_map.insert(key.to_string(), rmk.to_string());
+                    }
                 }
 
                 match key_lower.as_str() {
@@ -329,19 +331,19 @@ pub fn parse_ssh_config(content: &str) -> (Vec<Tunnel>, Vec<GroupDivider>) {
                     }
                     "localforward" => {
                         // format: [bind_address:]port host:hostport
-                        if let Some(pf) = parse_port_forward(val, ForwardType::Local, active) {
+                        if let Some(pf) = parse_port_forward(val, ForwardType::Local, active, inline_rmk) {
                             t.forwards.push(pf);
                         }
                     }
                     "remoteforward" => {
                         // format: [bind_address:]port host:hostport
-                        if let Some(pf) = parse_port_forward(val, ForwardType::Remote, active) {
+                        if let Some(pf) = parse_port_forward(val, ForwardType::Remote, active, inline_rmk) {
                             t.forwards.push(pf);
                         }
                     }
                     "dynamicforward" => {
                         // format: [bind_address:]port
-                        if let Some(pf) = parse_port_forward(val, ForwardType::Dynamic, active) {
+                        if let Some(pf) = parse_port_forward(val, ForwardType::Dynamic, active, inline_rmk) {
                             t.forwards.push(pf);
                         }
                     }
@@ -351,7 +353,7 @@ pub fn parse_ssh_config(content: &str) -> (Vec<Tunnel>, Vec<GroupDivider>) {
                                 key: key.to_string(),
                                 value: val.to_string(),
                                 is_active: active,
-                                remark: None,
+                                remark: inline_rmk.map(|s| s.to_string()),
                             });
                         }
                     }
@@ -425,11 +427,18 @@ pub fn parse_ssh_config(content: &str) -> (Vec<Tunnel>, Vec<GroupDivider>) {
     (tunnels, groups)
 }
 
-fn parse_port_forward(val: &str, forward_type: ForwardType, active: bool) -> Option<PortForwarding> {
+fn parse_port_forward(
+    val: &str,
+    forward_type: ForwardType,
+    active: bool,
+    remark: Option<&str>,
+) -> Option<PortForwarding> {
     let tokens: Vec<&str> = val.split_whitespace().collect();
     if tokens.is_empty() {
         return None;
     }
+
+    let remark_string = remark.map(|s| s.to_string());
 
     if forward_type == ForwardType::Dynamic {
         let first = tokens[0];
@@ -446,7 +455,7 @@ fn parse_port_forward(val: &str, forward_type: ForwardType, active: bool) -> Opt
             remote_host: String::new(),
             remote_port: 0,
             is_active: active,
-            remark: None,
+            remark: remark_string,
         })
     } else {
         // Local or Remote: [bind:]port remote_host:remote_port
@@ -472,7 +481,7 @@ fn parse_port_forward(val: &str, forward_type: ForwardType, active: bool) -> Opt
             remote_host: rhost.to_string(),
             remote_port: rport,
             is_active: active,
-            remark: None,
+            remark: remark_string,
         })
     }
 }
@@ -533,13 +542,13 @@ pub fn serialize_tunnel_block(tunnel: &Tunnel) -> String {
 
     if let Some(ref id_file) = tunnel.identity_file {
         if !id_file.is_empty() {
-            lines.push(format!("    IdentityFile {}", id_file));
+            lines.push(format!("    IdentityFile {}{}", id_file, get_rmk("identityfile")));
         }
     }
 
     if let Some(ref cert_file) = tunnel.certificate_file {
         if !cert_file.is_empty() {
-            lines.push(format!("    CertificateFile {}", cert_file));
+            lines.push(format!("    CertificateFile {}{}", cert_file, get_rmk("certificatefile")));
         }
     }
 
@@ -551,28 +560,28 @@ pub fn serialize_tunnel_block(tunnel: &Tunnel) -> String {
     }
 
     if let Some(timeout) = tunnel.connect_timeout {
-        lines.push(format!("    ConnectTimeout {}", timeout));
+        lines.push(format!("    ConnectTimeout {}{}", timeout, get_rmk("connecttimeout")));
     }
     if let Some(interval) = tunnel.server_alive_interval {
-        lines.push(format!("    ServerAliveInterval {}", interval));
+        lines.push(format!("    ServerAliveInterval {}{}", interval, get_rmk("serveraliveinterval")));
     }
     if let Some(count_max) = tunnel.server_alive_count_max {
-        lines.push(format!("    ServerAliveCountMax {}", count_max));
+        lines.push(format!("    ServerAliveCountMax {}{}", count_max, get_rmk("serveralivecountmax")));
     }
 
     if let Some(ref cm) = tunnel.control_master {
         if !cm.is_empty() && cm != "no" {
-            lines.push(format!("    ControlMaster {}", cm));
+            lines.push(format!("    ControlMaster {}{}", cm, get_rmk("controlmaster")));
         }
     }
     if let Some(ref cp) = tunnel.control_persist {
         if !cp.is_empty() && cp != "no" {
-            lines.push(format!("    ControlPersist {}", cp));
+            lines.push(format!("    ControlPersist {}{}", cp, get_rmk("controlpersist")));
         }
     }
     if let Some(ref cpath) = tunnel.control_path {
         if !cpath.is_empty() {
-            lines.push(format!("    ControlPath {}", cpath));
+            lines.push(format!("    ControlPath {}{}", cpath, get_rmk("controlpath")));
         }
     }
 
@@ -607,23 +616,30 @@ pub fn serialize_tunnel_block(tunnel: &Tunnel) -> String {
 
     if let Some(ref pj) = tunnel.proxy_jump {
         if !pj.is_empty() {
-            lines.push(format!("    ProxyJump {}", pj));
+            lines.push(format!("    ProxyJump {}{}", pj, get_rmk("proxyjump")));
         }
     }
     if let Some(ref pc) = tunnel.proxy_command {
         if !pc.is_empty() {
-            lines.push(format!("    ProxyCommand {}", pc));
+            lines.push(format!("    ProxyCommand {}{}", pc, get_rmk("proxycommand")));
         }
     }
     if let Some(ref lc) = tunnel.local_command {
         if !lc.is_empty() {
-            lines.push(format!("    LocalCommand {}", lc));
+            lines.push(format!("    LocalCommand {}{}", lc, get_rmk("localcommand")));
         }
     }
 
     // Forwards
     for f in &tunnel.forwards {
         let prefix = if f.is_active { "    " } else { "    # " };
+        let rmk = f
+            .remark
+            .as_ref()
+            .map(|r| r.replace('\n', " ").replace('\r', " ").trim().to_string())
+            .filter(|r| !r.is_empty())
+            .map(|r| format!(" # {}", r))
+            .unwrap_or_default();
         match f.forward {
             ForwardType::Dynamic => {
                 let bind = if f.bind_address.is_empty() {
@@ -631,7 +647,7 @@ pub fn serialize_tunnel_block(tunnel: &Tunnel) -> String {
                 } else {
                     &f.bind_address
                 };
-                lines.push(format!("{}DynamicForward {}:{}", prefix, bind, f.port));
+                lines.push(format!("{}DynamicForward {}:{}{}", prefix, bind, f.port, rmk));
             }
             ForwardType::Local => {
                 let bind = if f.bind_address.is_empty() {
@@ -640,8 +656,8 @@ pub fn serialize_tunnel_block(tunnel: &Tunnel) -> String {
                     &f.bind_address
                 };
                 lines.push(format!(
-                    "{}LocalForward {}:{} {}:{}",
-                    prefix, bind, f.port, f.remote_host, f.remote_port
+                    "{}LocalForward {}:{} {}:{}{}",
+                    prefix, bind, f.port, f.remote_host, f.remote_port, rmk
                 ));
             }
             ForwardType::Remote | ForwardType::ReverseDynamic => {
@@ -651,8 +667,8 @@ pub fn serialize_tunnel_block(tunnel: &Tunnel) -> String {
                     &f.bind_address
                 };
                 lines.push(format!(
-                    "{}RemoteForward {}:{} {}:{}",
-                    prefix, bind, f.port, f.remote_host, f.remote_port
+                    "{}RemoteForward {}:{} {}:{}{}",
+                    prefix, bind, f.port, f.remote_host, f.remote_port, rmk
                 ));
             }
         }
@@ -675,7 +691,21 @@ pub fn serialize_tunnel_block(tunnel: &Tunnel) -> String {
         if !d.value.is_empty() {
             lines.last_mut().unwrap().push_str(&d.value);
         }
-        let rmk = get_rmk(&d.key.to_lowercase());
+        let rmk = {
+            let by_key = get_rmk(&lower_key);
+            if !by_key.is_empty() {
+                by_key
+            } else if let Some(ref r) = d.remark {
+                let safe_r = r.replace('\n', " ").replace('\r', " ").trim().to_string();
+                if !safe_r.is_empty() {
+                    format!(" # {}", safe_r)
+                } else {
+                    "".to_string()
+                }
+            } else {
+                "".to_string()
+            }
+        };
         if !rmk.is_empty() {
             lines.last_mut().unwrap().push_str(&rmk);
         }
@@ -862,6 +892,110 @@ Host *
         assert!(!result.contains("server-1"));
         assert!(result.contains("server-2"));
         assert!(result.contains("Host *"));
+    }
+
+    #[test]
+    fn test_port_forward_remark_roundtrip() {
+        use crate::models::{ForwardType, PortForwarding, Tunnel};
+
+        let sample = r#"
+Host test-forward
+    HostName 10.0.0.1
+    User root
+    LocalForward 127.0.0.1:8080 192.168.1.100:80 # Web后台
+    # LocalForward 127.0.0.1:3306 192.168.1.101:3306 # 生产数据库
+    DynamicForward 127.0.0.1:1080 # SOCKS代理
+"#;
+        let (tunnels, _) = super::parse_ssh_config(sample);
+        let tunnel = tunnels.into_iter().find(|t| t.name == "test-forward").expect("tunnel found");
+
+        assert_eq!(tunnel.forwards.len(), 3);
+
+        let f1 = &tunnel.forwards[0];
+        assert_eq!(f1.forward, ForwardType::Local);
+        assert_eq!(f1.port, 8080);
+        assert_eq!(f1.remote_port, 80);
+        assert!(f1.is_active);
+        assert_eq!(f1.remark.as_deref(), Some("Web后台"));
+
+        let f2 = &tunnel.forwards[1];
+        assert_eq!(f2.forward, ForwardType::Local);
+        assert_eq!(f2.port, 3306);
+        assert_eq!(f2.remote_port, 3306);
+        assert!(!f2.is_active);
+        assert_eq!(f2.remark.as_deref(), Some("生产数据库"));
+
+        let f3 = &tunnel.forwards[2];
+        assert_eq!(f3.forward, ForwardType::Dynamic);
+        assert_eq!(f3.port, 1080);
+        assert!(f3.is_active);
+        assert_eq!(f3.remark.as_deref(), Some("SOCKS代理"));
+
+        // Test serialization
+        let serialized = super::serialize_tunnel_block(&tunnel);
+        assert!(serialized.contains("LocalForward 127.0.0.1:8080 192.168.1.100:80 # Web后台"));
+        assert!(serialized.contains("# LocalForward 127.0.0.1:3306 192.168.1.101:3306 # 生产数据库"));
+        assert!(serialized.contains("DynamicForward 127.0.0.1:1080 # SOCKS代理"));
+    }
+
+    #[test]
+    fn test_all_directive_remarks_roundtrip() {
+        let sample = r#"
+Host full-directives
+    HostName 1.2.3.4 # 主机地址
+    User admin # 管理员账号
+    Port 2222 # SSH自定义端口
+    IdentityFile ~/.ssh/id_ed25519 # 私钥文件
+    CertificateFile ~/.ssh/id_ed25519-cert.pub # 证书文件
+    ForwardAgent yes # 开启转发代理
+    IdentitiesOnly yes # 仅使用指定密钥
+    ConnectTimeout 15 # 连接超时15秒
+    ServerAliveInterval 30 # 保活心跳30秒
+    ServerAliveCountMax 5 # 最大重试5次
+    ControlMaster auto # 启用多路复用
+    ControlPersist 10m # 复用保持10分钟
+    ControlPath ~/.ssh/cm-%r@%h:%p # 复用套接字路径
+    Compression yes # 启用压缩
+    StrictHostKeyChecking no # 跳过主机公钥检查
+    LogLevel VERBOSE # 详细调试日志
+    ConnectionAttempts 3 # 连接尝试次数
+    BindAddress 192.168.1.50 # 本地出口绑定IP
+    AddressFamily inet # 仅使用IPv4
+    TCPKeepAlive yes # TCP保持连接
+    ProxyJump bastion-server # 跳板机
+    ProxyCommand nc -X 5 -x 127.0.0.1:1080 %h %p # 代理命令
+    LocalCommand notify-send 'SSH connected' # 连接执行命令
+    VisualHostKey yes # 视觉指纹
+"#;
+        let (tunnels, _) = super::parse_ssh_config(sample);
+        let tunnel = tunnels.into_iter().find(|t| t.name == "full-directives").expect("tunnel found");
+
+        let serialized = super::serialize_tunnel_block(&tunnel);
+
+        assert!(serialized.contains("HostName 1.2.3.4 # 主机地址"), "HostName remark missing: {}", serialized);
+        assert!(serialized.contains("User admin # 管理员账号"), "User remark missing: {}", serialized);
+        assert!(serialized.contains("Port 2222 # SSH自定义端口"), "Port remark missing: {}", serialized);
+        assert!(serialized.contains("IdentityFile ~/.ssh/id_ed25519 # 私钥文件"), "IdentityFile remark missing: {}", serialized);
+        assert!(serialized.contains("CertificateFile ~/.ssh/id_ed25519-cert.pub # 证书文件"), "CertificateFile remark missing: {}", serialized);
+        assert!(serialized.contains("ForwardAgent yes # 开启转发代理"), "ForwardAgent remark missing: {}", serialized);
+        assert!(serialized.contains("IdentitiesOnly yes # 仅使用指定密钥"), "IdentitiesOnly remark missing: {}", serialized);
+        assert!(serialized.contains("ConnectTimeout 15 # 连接超时15秒"), "ConnectTimeout remark missing: {}", serialized);
+        assert!(serialized.contains("ServerAliveInterval 30 # 保活心跳30秒"), "ServerAliveInterval remark missing: {}", serialized);
+        assert!(serialized.contains("ServerAliveCountMax 5 # 最大重试5次"), "ServerAliveCountMax remark missing: {}", serialized);
+        assert!(serialized.contains("ControlMaster auto # 启用多路复用"), "ControlMaster remark missing: {}", serialized);
+        assert!(serialized.contains("ControlPersist 10m # 复用保持10分钟"), "ControlPersist remark missing: {}", serialized);
+        assert!(serialized.contains("ControlPath ~/.ssh/cm-%r@%h:%p # 复用套接字路径"), "ControlPath remark missing: {}", serialized);
+        assert!(serialized.contains("Compression yes # 启用压缩"), "Compression remark missing: {}", serialized);
+        assert!(serialized.contains("StrictHostKeyChecking no # 跳过主机公钥检查"), "StrictHostKeyChecking remark missing: {}", serialized);
+        assert!(serialized.contains("LogLevel VERBOSE # 详细调试日志"), "LogLevel remark missing: {}", serialized);
+        assert!(serialized.contains("ConnectionAttempts 3 # 连接尝试次数"), "ConnectionAttempts remark missing: {}", serialized);
+        assert!(serialized.contains("BindAddress 192.168.1.50 # 本地出口绑定IP"), "BindAddress remark missing: {}", serialized);
+        assert!(serialized.contains("AddressFamily inet # 仅使用IPv4"), "AddressFamily remark missing: {}", serialized);
+        assert!(serialized.contains("TCPKeepAlive yes # TCP保持连接"), "TCPKeepAlive remark missing: {}", serialized);
+        assert!(serialized.contains("ProxyJump bastion-server # 跳板机"), "ProxyJump remark missing: {}", serialized);
+        assert!(serialized.contains("ProxyCommand nc -X 5 -x 127.0.0.1:1080 %h %p # 代理命令"), "ProxyCommand remark missing: {}", serialized);
+        assert!(serialized.contains("LocalCommand notify-send 'SSH connected' # 连接执行命令"), "LocalCommand remark missing: {}", serialized);
+        assert!(serialized.contains("VisualHostKey yes # 视觉指纹"), "CustomDirective remark missing: {}", serialized);
     }
 }
 

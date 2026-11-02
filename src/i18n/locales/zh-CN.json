@@ -381,7 +381,8 @@
     "missingHost": "未指定主机地址"
   },
   "generalTab": {
-    "localPort": "本地 :{{port}}"
+    "localPort": "本地 :{{port}}",
+    "forwardRemarkPlaceholder": "备注 (如: Web / MySQL)"
   },
   "advancedTab": {
     "globalDefault": "全局 ({{val}})",

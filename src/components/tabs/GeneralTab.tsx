@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import React, { useState, useMemo } from "react";
-import { Server, Plus, MinusCircle, Copy, Check, Laptop, ArrowRight, HelpCircle, FolderPlus } from "lucide-react";
+import { Server, Plus, MinusCircle, Copy, Check, Laptop, ArrowRight, HelpCircle, FolderPlus, FileText } from "lucide-react";
 import { Tunnel, PortForwarding, GroupDivider, ForwardType } from "@/types/tunnel";
 import { detectGitPlatform } from "@/components/ui/PlatformIcon";
 import { ConfigurationCard } from "@/components/ui/Card";
@@ -126,7 +126,7 @@ export function GeneralTab({
     }
     return <ConfigurationCard title={title} icon={<div className="px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold border border-primary/20 whitespace-nowrap">
             {logoText}
-          </div>} summary={<span className="text-muted-foreground text-xs">{description}</span>} defaultExpanded={false}>
+          </div>} summary={<span className="text-muted-foreground text-xs">{description}</span>} defaultExpanded={items.length > 0}>
         <div className="space-y-2 mt-1">
           {items.length === 0 ? <div className="flex flex-col items-center justify-center p-6 border border-dashed border-border/60 rounded-lg bg-background/30 text-muted-foreground">
               <Button variant="outline" onClick={() => addForward(type)} className="gap-1.5 h-8 text-xs font-medium">
@@ -150,7 +150,7 @@ export function GeneralTab({
                           <div className="flex items-center justify-center px-1 text-muted-foreground/70 text-[10px] font-mono tracking-tighter shrink-0">
                             {type === "local" ? "──➔" : "⬅──"}
                           </div>
-                          
+
                           {/* Remote Group */}
                           <div className="flex items-center bg-card border border-border/60 rounded-md shadow-2xs overflow-hidden h-7 focus-within:ring-1 focus-within:ring-primary/50 transition-shadow">
                             <Input className="w-[100px] h-full text-xs font-mono tabular-nums bg-transparent border-none shadow-none p-1.5 rounded-none focus-visible:ring-0 text-right placeholder:text-muted-foreground/40" value={item.remote_host} placeholder={t("auto_2066")} onChange={e => updateForward(item.id, {
@@ -162,11 +162,18 @@ export function GeneralTab({
                     })} />
                           </div>
                         </>}
-                      
-                      <div className="ml-2 flex-1">
-                        <InlineMemoField value={item.remark || ""} onChange={v => updateForward(item.id, {
-                    remark: v
-                  })} />
+
+                      {/* Remark / Note */}
+                      <div className="flex items-center bg-card border border-border/60 rounded-md shadow-2xs overflow-hidden h-7 focus-within:ring-1 focus-within:ring-primary/50 transition-all flex-1 min-w-[120px] px-2 gap-1.5 ml-1 group/remark">
+                        <FileText className="h-3 w-3 text-muted-foreground/40 group-focus-within/remark:text-primary transition-colors shrink-0" />
+                        <Input
+                          className="h-full text-xs bg-transparent border-none shadow-none p-0 rounded-none focus-visible:ring-0 placeholder:text-muted-foreground/40 text-foreground"
+                          value={item.remark || ""}
+                          placeholder={t("generalTab.forwardRemarkPlaceholder", "备注 (如: Web / MySQL)")}
+                          onChange={e => updateForward(item.id, {
+                            remark: e.target.value
+                          })}
+                        />
                       </div>
                     </div>
 
@@ -356,7 +363,10 @@ export function GeneralTab({
  <span className="text-muted-foreground whitespace-nowrap shrink-0 min-w-fit font-mono text-[11px]">
  {f.forward === "dynamic" ? "SOCKS5" : t("generalTab.localPort", { port: f.port, defaultValue: `本地 :${f.port}` })}
  </span>
- <div className="min-w-0 overflow-hidden flex-1"><span className="text-primary font-medium truncate block">{url}</span></div>
+ <div className="min-w-0 overflow-hidden flex-1 flex items-center gap-2">
+   <span className="text-primary font-medium truncate block">{url}</span>
+   {f.remark && <span className="text-[10px] text-muted-foreground/70 bg-background/80 border border-border/50 px-1.5 py-0.5 rounded truncate max-w-[120px] font-sans shrink-0">{f.remark}</span>}
+ </div>
  </div>
  <button type="button" onClick={() => {
               navigator.clipboard.writeText(url);

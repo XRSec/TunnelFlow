@@ -236,7 +236,17 @@ export function Sidebar({
       ungrouped.push(t);
     }
   });
-  const flatGroups = Array.from(groupsMap.values());
+  const isPortForwardGroup = (name?: string | null) => {
+    if (!name) return false;
+    const s = name.trim().toLowerCase();
+    return s === "端口转发" || s === "port forwarding" || s === "port forward";
+  };
+
+  const flatGroups = Array.from(groupsMap.values()).sort((a, b) => {
+    const aIsPF = isPortForwardGroup(a.name) ? 1 : 0;
+    const bIsPF = isPortForwardGroup(b.name) ? 1 : 0;
+    return bIsPF - aIsPF;
+  });
 
   // Calculate live stats
   const connectedCount = Object.values(runtimeStatus).filter(s => s.state?.toLowerCase() === "connected").length;
@@ -635,7 +645,7 @@ export function Sidebar({
 
         {/* Grouped Tunnels */}
         {flatGroups.map(group => {
-          const isCollapsed = collapsedGroups[group.name];
+          const isCollapsed = isPortForwardGroup(group.name) ? false : collapsedGroups[group.name];
           const totalCount = group.items.length;
           return <div key={group.name} className="space-y-1 pt-1">
               <div onClick={() => toggleGroupCollapse(group.name)} data-group-name={group.name} className={cn("flex items-center justify-between px-2 py-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground cursor-pointer transition-colors rounded-sm", dropGroup === group.name ? "bg-primary/10 border border-primary/50 text-foreground" : "")}>

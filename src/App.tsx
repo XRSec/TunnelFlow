@@ -405,8 +405,14 @@ export function App() {
       setKeys(kList);
       setKnownHosts(khList);
       if (tList.length > 0 && !selectedId) {
-        // Select first regular tunnel or first available
-        const first = tList.find(t => !t.is_general_config) || tList[0];
+        // 默认显示端口转发组下的主机，如果没有该分组则显示第一个主机
+        const isPortForwardGroup = (g?: string | null) => {
+          if (!g) return false;
+          const s = g.trim().toLowerCase();
+          return s === "端口转发" || s === "port forwarding" || s === "port forward";
+        };
+        const portForwardTunnel = tList.find(t => !t.is_general_config && isPortForwardGroup(t.group));
+        const first = portForwardTunnel || tList.find(t => !t.is_general_config) || tList[0];
         setSelectedId(first.id);
       }
     }

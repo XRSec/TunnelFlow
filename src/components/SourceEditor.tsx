@@ -1,8 +1,9 @@
 import { useTranslation } from "react-i18next";
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Tunnel } from "@/types/tunnel";
+import { Tunnel, PortForwarding } from "@/types/tunnel";
 import { ALL_SSH_DIRECTIVES } from "@/lib/directiveCatalog";
 import { Lock, Code2 } from "lucide-react";
+import { generateUUID } from "@/lib/utils";
 
 interface SourceEditorProps {
   tunnel: Tunnel;
@@ -154,6 +155,8 @@ export function SourceEditor({ tunnel, onChange, onSave, generalConfig }: Source
     const lines = textToParse.split("\n");
     let custom = [];
     let customSeen = new Set();
+    let parsedForwards: PortForwarding[] = [];
+    let hasForwardDirective = false;
     
     let newTunnel = { ...tunnel };
     let newFieldRemarks: Record<string, string> = {};
@@ -226,7 +229,57 @@ export function SourceEditor({ tunnel, onChange, onSave, generalConfig }: Source
           }
           else if (lowerKey === "port") newPort = parseInt(val) || 22;
           else if (lowerKey === "identityfile") newIdentityFile = val;
-          else if (lowerKey !== "host" && lowerKey !== "localforward" && lowerKey !== "remoteforward" && lowerKey !== "dynamicforward") {
+          else if (lowerKey === "localforward" || lowerKey === "remoteforward" || lowerKey === "dynamicforward") {
+            hasForwardDirective = true;
+            const tokens = val.trim().split(/\s+/);
+            if (tokens.length > 0) {
+              const forwardType = lowerKey === "localforward" ? "local" : lowerKey === "remoteforward" ? "remote" : "dynamic";
+              let bind = "127.0.0.1";
+              let port = 0;
+              let remoteHost = "";
+              let remotePort = 0;
+              if (forwardType === "dynamic") {
+                const first = tokens[0];
+                const lastColon = first.lastIndexOf(":");
+                if (lastColon !== -1) {
+                  bind = first.slice(0, lastColon);
+                  port = parseInt(first.slice(lastColon + 1)) || 1080;
+                } else {
+                  port = parseInt(first) || 1080;
+                }
+              } else {
+                const first = tokens[0];
+                const lastColon = first.lastIndexOf(":");
+                if (lastColon !== -1) {
+                  bind = first.slice(0, lastColon);
+                  port = parseInt(first.slice(lastColon + 1)) || 8080;
+                } else {
+                  port = parseInt(first) || 8080;
+                }
+                const second = tokens[1] || "";
+                const secondColon = second.lastIndexOf(":");
+                if (secondColon !== -1) {
+                  remoteHost = second.slice(0, secondColon);
+                  remotePort = parseInt(second.slice(secondColon + 1)) || 80;
+                } else {
+                  remoteHost = second;
+                  remotePort = 80;
+                }
+              }
+              const existing = tunnel.forwards.find(f => f.forward === forwardType && f.port === port && f.bind_address === bind);
+              parsedForwards.push({
+                id: existing ? existing.id : generateUUID(),
+                forward: forwardType,
+                bind_address: bind,
+                port,
+                remote_host: remoteHost,
+                remote_port: remotePort,
+                is_active: true,
+                remark: inlineRemark || existing?.remark || "",
+              });
+            }
+          }
+          else if (lowerKey !== "host") {
             const dedupKey = lowerKey + " " + val.trim();
             if (!customSeen.has(dedupKey)) {
               customSeen.add(dedupKey);
@@ -252,6 +305,9 @@ export function SourceEditor({ tunnel, onChange, onSave, generalConfig }: Source
     }
     newTunnel.custom_directives = [...custom, ...tunnel.custom_directives.filter(d => !d.is_active)];
     newTunnel.field_remarks = newFieldRemarks;
+    if (hasForwardDirective) {
+      newTunnel.forwards = [...parsedForwards, ...tunnel.forwards.filter(f => !f.is_active)];
+    }
     onChange(newTunnel);
   }, [tunnel, onChange]);
 
@@ -262,12 +318,13 @@ export function SourceEditor({ tunnel, onChange, onSave, generalConfig }: Source
       return rmk ? ` # ${rmk}` : "";
     };
     let lines: string[] = [];
-    
+
     const pushForwards = () => {
       tunnel.forwards.filter(f => f.is_active).forEach(f => {
-        if (f.forward === "local") lines.push(`  LocalForward ${f.bind_address}:${f.port} ${f.remote_host}:${f.remote_port}`);
-        if (f.forward === "remote") lines.push(`  RemoteForward ${f.bind_address}:${f.port} ${f.remote_host}:${f.remote_port}`);
-        if (f.forward === "dynamic") lines.push(`  DynamicForward ${f.bind_address}:${f.port}`);
+        const rmk = f.remark ? ` # ${f.remark}` : "";
+        if (f.forward === "local") lines.push(`  LocalForward ${f.bind_address}:${f.port} ${f.remote_host}:${f.remote_port}${rmk}`);
+        if (f.forward === "remote") lines.push(`  RemoteForward ${f.bind_address}:${f.port} ${f.remote_host}:${f.remote_port}${rmk}`);
+        if (f.forward === "dynamic") lines.push(`  DynamicForward ${f.bind_address}:${f.port}${rmk}`);
       });
     };
 
@@ -280,22 +337,22 @@ export function SourceEditor({ tunnel, onChange, onSave, generalConfig }: Source
 
     if (tunnel.is_general_config || tunnel.name === "*") {
       lines.push("Host *");
-      if (tunnel.server_alive_interval) lines.push(`  ServerAliveInterval ${tunnel.server_alive_interval}`);
-      if (tunnel.server_alive_count_max) lines.push(`  ServerAliveCountMax ${tunnel.server_alive_count_max}`);
-      if (tunnel.connect_timeout) lines.push(`  ConnectTimeout ${tunnel.connect_timeout}`);
-      
+      if (tunnel.server_alive_interval) lines.push(`  ServerAliveInterval ${tunnel.server_alive_interval}${getRmk("serveraliveinterval")}`);
+      if (tunnel.server_alive_count_max) lines.push(`  ServerAliveCountMax ${tunnel.server_alive_count_max}${getRmk("serveralivecountmax")}`);
+      if (tunnel.connect_timeout) lines.push(`  ConnectTimeout ${tunnel.connect_timeout}${getRmk("connecttimeout")}`);
+
       const hasIdentityFile = !!tunnel.identity_file;
       if (hasIdentityFile) lines.push(`  IdentityFile ${tunnel.identity_file}${getRmk("identityfile")}`);
-      
-      if (tunnel.compression) lines.push(`  Compression yes`);
-      if (tunnel.control_master) lines.push(`  ControlMaster ${tunnel.control_master}`);
-      if (tunnel.control_path) lines.push(`  ControlPath ${tunnel.control_path}`);
-      if ((tunnel as any).log_level) lines.push(`  LogLevel ${(tunnel as any).log_level}`);
-      if ((tunnel as any).connection_attempts) lines.push(`  ConnectionAttempts ${(tunnel as any).connection_attempts}`);
-      if ((tunnel as any).bind_address) lines.push(`  BindAddress ${(tunnel as any).bind_address}`);
-      if ((tunnel as any).address_family) lines.push(`  AddressFamily ${(tunnel as any).address_family}`);
-      if ((tunnel as any).tcp_keep_alive !== undefined) lines.push(`  TCPKeepAlive ${(tunnel as any).tcp_keep_alive ? "yes" : "no"}`);
-      
+
+      if (tunnel.compression) lines.push(`  Compression yes${getRmk("compression")}`);
+      if (tunnel.control_master) lines.push(`  ControlMaster ${tunnel.control_master}${getRmk("controlmaster")}`);
+      if (tunnel.control_path) lines.push(`  ControlPath ${tunnel.control_path}${getRmk("controlpath")}`);
+      if ((tunnel as any).log_level) lines.push(`  LogLevel ${(tunnel as any).log_level}${getRmk("loglevel")}`);
+      if ((tunnel as any).connection_attempts) lines.push(`  ConnectionAttempts ${(tunnel as any).connection_attempts}${getRmk("connectionattempts")}`);
+      if ((tunnel as any).bind_address) lines.push(`  BindAddress ${(tunnel as any).bind_address}${getRmk("bindaddress")}`);
+      if ((tunnel as any).address_family) lines.push(`  AddressFamily ${(tunnel as any).address_family}${getRmk("addressfamily")}`);
+      if ((tunnel as any).tcp_keep_alive !== undefined) lines.push(`  TCPKeepAlive ${(tunnel as any).tcp_keep_alive ? "yes" : "no"}${getRmk("tcpkeepalive")}`);
+
       pushCustomDirectives(hasIdentityFile);
     } else if (tunnel.use_alias) {
       lines.push(`Host ${tunnel.name}${tunnel.remark ? ` # ${tunnel.remark}` : ""}`);

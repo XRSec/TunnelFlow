@@ -381,7 +381,8 @@
     "missingHost": "Host address not specified"
   },
   "generalTab": {
-    "localPort": "Local :{{port}}"
+    "localPort": "Local :{{port}}",
+    "forwardRemarkPlaceholder": "Remark (e.g. Web / MySQL)"
   },
   "advancedTab": {
     "globalDefault": "Global ({{val}})",
