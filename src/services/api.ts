@@ -279,3 +279,10 @@ export const isMouseButtonDown = async (): Promise<boolean> => {
   }
   return false;
 };
+
+export async function exitApp(): Promise<void> {
+  if (isTauri()) {
+    const { invoke } = await import("@tauri-apps/api/core");
+    await invoke("exit_app");
+  }
+}

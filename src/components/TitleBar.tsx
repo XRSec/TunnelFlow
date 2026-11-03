@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import React from "react";
-import { Volume2, VolumeX, Sun, Moon, Shield, Minus, Square, Copy, X, PanelLeft, Info } from "lucide-react";
+import { Volume2, VolumeX, Sun, Moon, Shield, Minus, Square, Copy, X, PanelLeft, Info, Minimize2 } from "lucide-react";
 import { isMacOS, isWindows, isLinux, handleWindowDragOrMaximize, handleWindowDoubleClick, minimizeWindow, toggleWindowMaximize, closeWindow, useIsMaximized } from "@/lib/window";
 import { cn } from "@/lib/utils";
 import { isSoundEnabled, setSoundEnabled } from "@/lib/sound";
@@ -94,7 +94,18 @@ export function TitleBar({
                 <Code2 className="h-3 w-3" />{t("common.source", "源码")}</button>
             </div>}
 
-          {windowMode === "full" && onSwitchMode && <button type="button" data-no-drag onClick={onSwitchMode} className="drag-exclude inline-flex h-7 px-2 items-center justify-center gap-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer text-[10px] font-medium border border-border/40" title={t("auto_2008")}>{t("auto_2009")}</button>}
+          {windowMode === "full" && onSwitchMode && (
+            <button
+              type="button"
+              data-no-drag
+              onClick={onSwitchMode}
+              className="drag-exclude inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer border border-border/40 mr-2"
+              title={t("common.miniMode", "Mini 模式")}
+              aria-label={t("common.miniMode", "Mini 模式")}
+            >
+              <Minimize2 className="h-3.5 w-3.5" />
+            </button>
+          )}
 
 
 

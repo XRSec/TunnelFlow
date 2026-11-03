@@ -1,6 +1,7 @@
 {
   "common.visual": "可视化",
   "common.source": "源码",
+  "common.miniMode": "Mini 模式",
   "status": {
     "connected": "已连接",
     "connecting": "连接中...",

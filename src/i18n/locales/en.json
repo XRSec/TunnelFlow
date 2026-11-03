@@ -1,6 +1,7 @@
 {
   "common.visual": "Visual",
   "common.source": "Source",
+  "common.miniMode": "Mini Mode",
   "status": {
     "connected": "Connected",
     "connecting": "Connecting...",

@@ -42,7 +42,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState<ConfigurationTab>("general");
   const [runtimeStatus, setRuntimeStatus] = useState<Record<string, TunnelRuntimeStatus>>({});
   const [theme, setTheme] = useState<"dark" | "light">("light");
-  const [windowMode, setWindowModeState] = useState<WindowMode>(() => localStorage.getItem("tunnelflow:window_mode") as WindowMode || "mini");
+  const [windowMode, setWindowModeState] = useState<WindowMode>("mini");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem("tunnelflow:sidebar_collapsed");
@@ -97,11 +97,15 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    // Initial sync
-    const currentMode = localStorage.getItem("tunnelflow:window_mode") as WindowMode || "mini";
-    apiSetWindowMode(currentMode);
+    // 每次启动默认以 Mini 模式 (370x670) 开启
+    setWindowModeState("mini");
+    apiSetWindowMode("mini");
+    try {
+      localStorage.setItem("tunnelflow:window_mode", "mini");
+    } catch {}
   }, []);
   useEffect(() => {
+    const mountTime = Date.now();
     const performSnap = () => {
       if (!isResizingRef.current) return;
       if (resizeTimeoutRef.current) clearTimeout(resizeTimeoutRef.current);
@@ -146,6 +150,8 @@ export function App() {
       performSnap();
     };
     const handleResize = () => {
+      // 避免窗口启动首帧渲染或系统恢复窗口状态时误触吸附判断
+      if (Date.now() - mountTime < 1000) return;
       setIsResizing(true);
       isResizingRef.current = true;
       isMouseDownRef.current = true;
@@ -736,7 +742,26 @@ export function App() {
       localStorage.setItem("tunnelflow:window_mode", "full");
     }} /> : <div className="flex h-full w-full flex-col overflow-hidden bg-background text-foreground antialiased font-sans">
       {/* 1. Global Cross-Platform TitleBar */}
-      <TitleBar theme={theme} onToggleTheme={toggleTheme} onOpenKeysModal={() => setIsKeysModalOpen(true)} onImportCommand={() => setIsImportModalOpen(true)} activeTunnelName={currentTunnel?.name} connectedCount={connectedCount} connectingCount={connectingCount} isSidebarCollapsed={isSidebarCollapsed} onToggleSidebar={toggleSidebar} viewMode={viewMode} onViewModeChange={setViewMode} onOpenAboutModal={() => setIsAboutModalOpen(true)} />
+      <TitleBar
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onOpenKeysModal={() => setIsKeysModalOpen(true)}
+        onImportCommand={() => setIsImportModalOpen(true)}
+        activeTunnelName={currentTunnel?.name}
+        connectedCount={connectedCount}
+        connectingCount={connectingCount}
+        isSidebarCollapsed={isSidebarCollapsed}
+        onToggleSidebar={toggleSidebar}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onOpenAboutModal={() => setIsAboutModalOpen(true)}
+        windowMode={windowMode}
+        onSwitchMode={() => {
+          setWindowModeState("mini");
+          apiSetWindowMode("mini");
+          localStorage.setItem("tunnelflow:window_mode", "mini");
+        }}
+      />
 
       {/* 2. Workspace Body */}
       <div className="flex flex-1 min-h-0 w-full overflow-hidden">

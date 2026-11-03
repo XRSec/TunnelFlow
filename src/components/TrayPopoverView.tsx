@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import React, { useEffect, useRef, useState } from "react";
 import { Tunnel, GroupDivider, TunnelRuntimeStatus } from "@/types/tunnel";
-import { fetchTunnels, fetchGroups, fetchRuntimeStatus, startTunnel as apiStartTunnel, stopTunnel as apiStopTunnel } from "@/services/api";
+import { fetchTunnels, fetchGroups, fetchRuntimeStatus, startTunnel as apiStartTunnel, stopTunnel as apiStopTunnel, exitApp } from "@/services/api";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, emit } from "@tauri-apps/api/event";
 import { AppWindow, Power, Info } from "lucide-react";
@@ -113,10 +113,9 @@ export function TrayPopoverView() {
     if (!containerRef.current) return;
     const observer = new ResizeObserver(entries => {
       for (let entry of entries) {
-        let cardHeight = entry.target.scrollHeight;
-        let totalHeight = cardHeight + 12; // 6px padding top/bottom
-        totalHeight = Math.max(160, Math.min(totalHeight, 520));
-        if (Math.abs(totalHeight - lastHeightRef.current) > 4) {
+        let cardHeight = Math.ceil(entry.target.scrollHeight);
+        let totalHeight = Math.max(150, Math.min(cardHeight, 520));
+        if (Math.abs(totalHeight - lastHeightRef.current) > 2) {
           lastHeightRef.current = totalHeight;
           invoke('resize_tray_window', {
             height: totalHeight
@@ -162,8 +161,8 @@ export function TrayPopoverView() {
     }
   };
   const forwardingTunnels = tunnels.filter(t => t.forwards.some(f => f.is_active));
-  return <div className="w-full h-auto min-h-screen bg-transparent p-1.5 flex items-start justify-center">
-      <div ref={containerRef} className="w-full bg-[#e7e8e7] dark:bg-[#282828] border border-[#d0d1d0] dark:border-[#3a3a3a] shadow-[0_12px_32px_rgba(0,0,0,0.18)] rounded-[12px] text-foreground select-none overflow-hidden text-sm flex flex-col h-auto">
+  return <div className="w-full h-auto bg-transparent p-0 flex items-start justify-center">
+      <div ref={containerRef} className="w-full bg-[#e7e8e7] dark:bg-[#282828] border border-[#d0d1d0] dark:border-[#3a3a3a] rounded-[12px] text-foreground select-none overflow-hidden text-sm flex flex-col h-auto">
         <div className="flex-1 overflow-y-auto p-1.5 pb-0 max-h-[420px]">
           {forwardingTunnels.length === 0 ? <div className="py-4 text-center text-[#6e6e73] dark:text-[#9e9ea3] text-[13px]">{t("auto_2242")}</div> : <div className="space-y-0.5">
               {groups.length > 0 ? groups.map(group => {
@@ -230,21 +229,13 @@ export function TrayPopoverView() {
             <span className="text-[#8e8e93] font-sans text-[11px]">⌘,</span>
           </button>
           <button onClick={() => {
-          import("@tauri-apps/api/core").then(({
-            invoke
-          }) => {
-            invoke('plugin:process|exit', {
-              code: 0
-            }).catch(() => {
-              window.close();
-            });
-          });
-        }} className="w-full flex items-center justify-between px-2 py-1.5 rounded-[6px] hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-[13px] font-normal text-[#1d1d1f] dark:text-[#f5f5f7] cursor-default mt-0.5">
+            exitApp().catch(() => invoke('exit_app'));
+          }} className="w-full flex items-center justify-between px-2 py-1.5 rounded-[6px] hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-[13px] font-normal text-[#1d1d1f] dark:text-[#f5f5f7] cursor-default mt-0.5">
             <div className="flex items-center gap-2">
               <Power className="w-[14px] h-[14px] opacity-75" />
               <span>{t("auto_2244")}</span>
             </div>
-            <span className="text-[#8e8e93] font-sans text-[11px]">"⌘Q"</span>
+            <span className="text-[#8e8e93] font-sans text-[11px]">⌘Q</span>
           </button>
         </div>
       </div>

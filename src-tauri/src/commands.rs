@@ -190,6 +190,9 @@ pub async fn set_window_mode(app: tauri::AppHandle, mode: String) -> Result<(), 
         let _ = window.set_min_size(Some(tauri::LogicalSize::new(370.0, 460.0)));
 
         if mode == "mini" {
+            if window.is_maximized().unwrap_or(false) {
+                let _ = window.unmaximize();
+            }
             let _ = window.set_size(tauri::LogicalSize::new(370.0, 670.0));
             center_window(&window, 370.0, 670.0);
         } else if mode == "mini_snap" {
