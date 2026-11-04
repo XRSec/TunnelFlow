@@ -25,3 +25,4 @@ dist-ssr
 
 # Agent / Tooling files
 skills-lock.json
+.cindy
