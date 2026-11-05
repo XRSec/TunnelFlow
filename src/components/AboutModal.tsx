@@ -3,9 +3,9 @@ import { useTranslation } from "react-i18next";
 import { changeAppLanguage } from "../i18n";
 import { X, ExternalLink, ShieldCheck, RefreshCw, Loader2, Languages } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { getVersion } from '@tauri-apps/api/app';
 import { invoke } from "@tauri-apps/api/core";
 import { enable, disable, isEnabled } from "@tauri-apps/plugin-autostart";
+import { useAppVersion } from "@/lib/version";
 
 export function AboutModal({
   isOpen,
@@ -17,7 +17,7 @@ export function AboutModal({
   onCheckUpdate: () => void;
 }) {
   const { t, i18n } = useTranslation();
-  const [version, setVersion] = useState("1.0.0");
+  const version = useAppVersion();
   const [autostartEnabled, setAutostartEnabled] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [upToDateMsg, setUpToDateMsg] = useState("");
@@ -26,7 +26,6 @@ export function AboutModal({
 
   useEffect(() => {
     if (isOpen) {
-      getVersion().then(setVersion).catch(console.error);
       isEnabled().then(setAutostartEnabled).catch(console.error);
       setUpToDateMsg("");
       const autoCheckStr = localStorage.getItem("tunnelflow:auto_check_update");
