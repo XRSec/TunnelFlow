@@ -127,6 +127,20 @@ jobs:
           echo "target_version=$TARGET_VER" >> "$GITHUB_OUTPUT"
           echo "tag_name=v${TARGET_VER}" >> "$GITHUB_OUTPUT"
 
+      - name: Pre-create draft release
+        if: steps.eval.outputs.need_release == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ steps.eval.outputs.tag_name }}
+        run: |
+          if ! gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Pre-creating draft release $TAG_NAME to prevent matrix race conditions..."
+            gh release create "$TAG_NAME" \
+              --draft \
+              --title "TunnelFlow $TAG_NAME" \
+              --notes "TunnelFlow 跨平台版本（支持 macOS · Windows · Linux 的 arm64 与 amd64 完整多架构安装包）。"
+          fi
+
   release:
     name: Build (${{ matrix.platform }} - ${{ matrix.arch }})
     needs: [version-gate]
