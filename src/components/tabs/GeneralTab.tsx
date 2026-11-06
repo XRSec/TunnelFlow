@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { Server, Plus, MinusCircle, Copy, Check, Laptop, ArrowRight, HelpCircle, FolderPlus, FileText } from "lucide-react";
 import { Tunnel, PortForwarding, GroupDivider, ForwardType } from "@/types/tunnel";
 import { detectGitPlatform } from "@/components/ui/PlatformIcon";
@@ -12,6 +12,89 @@ import { Toggle } from "@/components/ui/Toggle";
 import { Button } from "@/components/ui/Button";
 import { HostCombobox } from "@/components/ui/HostCombobox";
 import { generateUUID, cn } from "@/lib/utils";
+
+function ForwardRemark({
+  value = "",
+  onChange
+}: {
+  value?: string;
+  onChange: (val: string) => void;
+}) {
+  const { t } = useTranslation();
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setDraft(value);
+  }, [value]);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const commit = () => {
+    const trimmed = draft.trim();
+    onChange(trimmed);
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      commit();
+    } else if (e.key === "Escape") {
+      setDraft(value);
+      setIsEditing(false);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <div className="flex items-center bg-card border border-primary/50 rounded-md shadow-2xs overflow-hidden h-7 shrink-0 px-2 gap-1.5 w-32 sm:w-40 ring-1 ring-primary/40 transition-all">
+        <FileText className="h-3 w-3 text-primary shrink-0" />
+        <input
+          ref={inputRef}
+          type="text"
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={commit}
+          placeholder={t("generalTab.forwardRemarkPlaceholder", "备注 (如: Web / MySQL)")}
+          className="h-full w-full text-xs bg-transparent border-none outline-none p-0 text-foreground placeholder:text-muted-foreground/40 font-normal"
+        />
+      </div>
+    );
+  }
+
+  if (value && value.trim()) {
+    return (
+      <button
+        type="button"
+        onClick={() => setIsEditing(true)}
+        className="group/badge inline-flex items-center gap-1.5 h-7 px-2 max-w-[130px] sm:max-w-[160px] rounded-md bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/50 text-xs font-normal transition-colors shrink truncate cursor-pointer"
+        title={`${value} (${t("common.clickToEdit", "点击修改")})`}
+      >
+        <FileText className="h-3 w-3 text-muted-foreground/60 shrink-0 group-hover/badge:text-foreground" />
+        <span className="truncate">{value}</span>
+      </button>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setIsEditing(true)}
+      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/45 hover:text-foreground hover:bg-muted/60 transition-colors shrink-0 cursor-pointer"
+      title={t("common.addRemark", "添加备注")}
+    >
+      <FileText className="h-3.5 w-3.5" />
+    </button>
+  );
+}
+
 interface GeneralTabProps {
   tunnel: Tunnel;
   groups: GroupDivider[];
@@ -136,45 +219,38 @@ export function GeneralTab({
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="flex items-center gap-1.5 flex-1 min-w-0">
                       {/* Local Group */}
-                      <div className="flex items-center bg-card border border-border/60 rounded-md shadow-2xs overflow-hidden h-7 focus-within:ring-1 focus-within:ring-primary/50 transition-shadow">
-                        <Input className="w-24 h-full text-xs font-mono tabular-nums bg-transparent border-none shadow-none p-1.5 rounded-none focus-visible:ring-0 text-right placeholder:text-muted-foreground/40" value={item.bind_address} placeholder={type === "remote" ? "0.0.0.0" : "127.0.0.1"} onChange={e => updateForward(item.id, {
+                      <div className="flex items-center bg-card border border-border/60 rounded-md shadow-2xs overflow-hidden h-7 shrink-0 focus-within:ring-1 focus-within:ring-primary/50 transition-shadow">
+                        <Input className="w-24 h-full text-xs font-mono tabular-nums bg-transparent border-none shadow-none p-1.5 rounded-none focus-visible:ring-0 text-right placeholder:text-muted-foreground/40 shrink-0" value={item.bind_address} placeholder={type === "remote" ? "0.0.0.0" : "127.0.0.1"} onChange={e => updateForward(item.id, {
                     bind_address: e.target.value
                   })} />
-                        <span className="text-muted-foreground/60 text-xs px-0.5">:</span>
-                        <Input type="number" className="w-16 h-full text-xs font-mono tabular-nums bg-transparent border-none shadow-none p-1.5 rounded-none focus-visible:ring-0 placeholder:text-muted-foreground/40 text-primary font-medium" value={item.port || ""} placeholder={t("auto_2065")} onChange={e => updateForward(item.id, {
+                        <span className="text-muted-foreground/60 text-xs px-0.5 shrink-0">:</span>
+                        <Input type="number" className="w-16 h-full text-xs font-mono tabular-nums bg-transparent border-none shadow-none p-1.5 rounded-none focus-visible:ring-0 placeholder:text-muted-foreground/40 text-primary font-medium shrink-0" value={item.port || ""} placeholder={t("auto_2065")} onChange={e => updateForward(item.id, {
                     port: parseInt(e.target.value) || 0
                   })} />
                       </div>
 
                       {type !== "dynamic" && <>
-                          <div className="flex items-center justify-center px-1 text-muted-foreground/70 text-[10px] font-mono tracking-tighter shrink-0">
+                          <div className="flex items-center justify-center px-1 text-muted-foreground/70 text-[10px] font-mono tracking-tighter shrink-0 select-none">
                             {type === "local" ? "──➔" : "⬅──"}
                           </div>
 
                           {/* Remote Group */}
-                          <div className="flex items-center bg-card border border-border/60 rounded-md shadow-2xs overflow-hidden h-7 focus-within:ring-1 focus-within:ring-primary/50 transition-shadow">
-                            <Input className="w-[100px] h-full text-xs font-mono tabular-nums bg-transparent border-none shadow-none p-1.5 rounded-none focus-visible:ring-0 text-right placeholder:text-muted-foreground/40" value={item.remote_host} placeholder={t("auto_2066")} onChange={e => updateForward(item.id, {
+                          <div className="flex items-center bg-card border border-border/60 rounded-md shadow-2xs overflow-hidden h-7 shrink-0 focus-within:ring-1 focus-within:ring-primary/50 transition-shadow">
+                            <Input className="w-[100px] h-full text-xs font-mono tabular-nums bg-transparent border-none shadow-none p-1.5 rounded-none focus-visible:ring-0 text-right placeholder:text-muted-foreground/40 shrink-0" value={item.remote_host} placeholder={t("auto_2066")} onChange={e => updateForward(item.id, {
                       remote_host: e.target.value
                     })} />
-                            <span className="text-muted-foreground/60 text-xs px-0.5">:</span>
-                            <Input type="number" className="w-16 h-full text-xs font-mono tabular-nums bg-transparent border-none shadow-none p-1.5 rounded-none focus-visible:ring-0 placeholder:text-muted-foreground/40 text-primary font-medium" value={item.remote_port || ""} placeholder={t("auto_2067")} onChange={e => updateForward(item.id, {
+                            <span className="text-muted-foreground/60 text-xs px-0.5 shrink-0">:</span>
+                            <Input type="number" className="w-16 h-full text-xs font-mono tabular-nums bg-transparent border-none shadow-none p-1.5 rounded-none focus-visible:ring-0 placeholder:text-muted-foreground/40 text-primary font-medium shrink-0" value={item.remote_port || ""} placeholder={t("auto_2067")} onChange={e => updateForward(item.id, {
                       remote_port: parseInt(e.target.value) || 0
                     })} />
                           </div>
                         </>}
 
                       {/* Remark / Note */}
-                      <div className="flex items-center bg-card border border-border/60 rounded-md shadow-2xs overflow-hidden h-7 focus-within:ring-1 focus-within:ring-primary/50 transition-all flex-1 min-w-[120px] px-2 gap-1.5 ml-1 group/remark">
-                        <FileText className="h-3 w-3 text-muted-foreground/40 group-focus-within/remark:text-primary transition-colors shrink-0" />
-                        <Input
-                          className="h-full text-xs bg-transparent border-none shadow-none p-0 rounded-none focus-visible:ring-0 placeholder:text-muted-foreground/40 text-foreground"
-                          value={item.remark || ""}
-                          placeholder={t("generalTab.forwardRemarkPlaceholder", "备注 (如: Web / MySQL)")}
-                          onChange={e => updateForward(item.id, {
-                            remark: e.target.value
-                          })}
-                        />
-                      </div>
+                      <ForwardRemark
+                        value={item.remark || ""}
+                        onChange={v => updateForward(item.id, { remark: v })}
+                      />
                     </div>
 
                     {/* Actions */}

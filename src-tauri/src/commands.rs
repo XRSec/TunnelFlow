@@ -228,11 +228,6 @@ pub fn open_main_window(app: tauri::AppHandle) {
         let _ = tray_win.hide();
     }
     if let Some(main_win) = app.get_webview_window("main").or_else(|| app.get_webview_window("TunnelFlow")) {
-        let _ = main_win.emit("window-reset-mini", ());
-        let _ = main_win.set_resizable(true);
-        let _ = main_win.set_min_size(Some(tauri::LogicalSize::new(370.0, 460.0)));
-        let _ = main_win.set_size(tauri::LogicalSize::new(370.0, 670.0));
-        center_window(&main_win, 370.0, 670.0);
         let _ = main_win.unminimize();
         let _ = main_win.show();
         let _ = main_win.set_focus();
