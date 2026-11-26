@@ -344,9 +344,12 @@
   "notifications": {
     "connectedMsg": "{{name}} connected successfully",
     "errorMsg": "{{name}} connection error",
-    "disconnectedMsg": "{{name}} disconnected"
+    "disconnectedMsg": "{{name}} disconnected",
+    "reconnectingTitle": "Connection Dropped",
+    "reconnectingMsg": "{{name}} disconnected, reconnecting..."
   },
   "common": {
+    "cancel": "Cancel",
     "newHostPrefix": "New-Host",
     "collapse": "Collapse",
     "expand": "Expand",
@@ -383,7 +386,9 @@
   },
   "generalTab": {
     "localPort": "Local :{{port}}",
-    "forwardRemarkPlaceholder": "Remark (e.g. Web / MySQL)"
+    "forwardRemarkPlaceholder": "Remark (e.g. Web / MySQL)",
+    "autoReconnect": "Auto Reconnect on Disconnect",
+    "autoReconnectDesc": "Automatically attempt to reconnect when SSH connection drops unexpectedly"
   },
   "advancedTab": {
     "globalDefault": "Global ({{val}})",

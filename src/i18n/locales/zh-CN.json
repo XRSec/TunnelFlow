@@ -344,9 +344,12 @@
   "notifications": {
     "connectedMsg": "{{name}} 已成功连接",
     "errorMsg": "{{name}} 连接发生错误",
-    "disconnectedMsg": "{{name}} 已断开连接"
+    "disconnectedMsg": "{{name}} 已断开连接",
+    "reconnectingTitle": "连接意外中断",
+    "reconnectingMsg": "{{name}} 掉线，正在自动重连..."
   },
   "common": {
+    "cancel": "取消",
     "newHostPrefix": "新主机",
     "collapse": "收起",
     "expand": "展开",
@@ -383,7 +386,9 @@
   },
   "generalTab": {
     "localPort": "本地 :{{port}}",
-    "forwardRemarkPlaceholder": "备注 (如: Web / MySQL)"
+    "forwardRemarkPlaceholder": "备注 (如: Web / MySQL)",
+    "autoReconnect": "意外断开时自动重连",
+    "autoReconnectDesc": "当 SSH 连接非主动中断（网络波动、进程异常退出等）时自动尝试重新连接"
   },
   "advancedTab": {
     "globalDefault": "全局 ({{val}})",

@@ -421,6 +421,17 @@ export function GeneralTab({
             }
           })} />} />
  </div>
+
+ <div className="pt-6">
+ <Toggle title={t("generalTab.autoReconnect", "意外断开时自动重连")} description={t("generalTab.autoReconnectDesc", "当 SSH 连接非主动中断（网络波动、进程异常退出等）时自动尝试重新连接")} checked={tunnel.auto_reconnect ?? true} onChange={checked => updateTunnel({
+            auto_reconnect: checked
+          })} memo={<InlineMemoField value={tunnel.field_remarks?.AutoReconnect || tunnel.field_remarks?.autoreconnect || ""} onChange={v => updateTunnel({
+            field_remarks: {
+              ...tunnel.field_remarks,
+              autoreconnect: v
+            }
+          })} />} />
+ </div>
  </TwoColumnGrid>
  </ConfigurationCard>
 

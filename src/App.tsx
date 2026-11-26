@@ -25,7 +25,7 @@ import { AboutModal } from "@/components/AboutModal";
 import { UpdateModal } from "@/components/UpdateModal";
 import { generateUUID } from "@/lib/utils";
 import { Layers, Network } from "lucide-react";
-import { playConnectSound, playDisconnectSound, playConflictSound, playConnectingSound, playConnectFailedSound } from "@/lib/sound";
+import { playConnectSound, playDisconnectSound, playConflictSound, playConnectingSound, playConnectFailedSound, playReconnectingSound } from "@/lib/sound";
 import { sendNotification } from "@/lib/notification";
 export function App() {
   const {
@@ -461,6 +461,14 @@ export function App() {
             }
             const tName = tunnels.find(t => t.id === id)?.name || t("auto_2250");
             sendNotification(t("auto_2251"), t("notifications.connectedMsg", { name: tName, defaultValue: `${tName} 已成功连接` }));
+          } else if (currState === "connecting" && prevState === "connected") {
+            try {
+              playReconnectingSound();
+            } catch (e) {
+              console.debug(e);
+            }
+            const tName = tunnels.find(t => t.id === id)?.name || t("auto_2250");
+            sendNotification(t("notifications.reconnectingTitle", "连接意外中断"), t("notifications.reconnectingMsg", { name: tName, defaultValue: `${tName} 掉线，正在自动重连...` }));
           } else if (currState === "error" && (prevState === "connecting" || prevState === "connected")) {
             try {
               playConnectFailedSound();

@@ -5,7 +5,7 @@ import { fetchTunnels, fetchGroups, fetchRuntimeStatus, startTunnel as apiStartT
 import { invoke } from "@tauri-apps/api/core";
 import { listen, emit } from "@tauri-apps/api/event";
 import { AppWindow, Power, Info } from "lucide-react";
-import { playConnectSound, playDisconnectSound, playConnectingSound, playConnectFailedSound } from "@/lib/sound";
+import { playDisconnectSound, playConnectingSound, playConnectFailedSound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 export function TrayPopoverView() {
   const {
@@ -28,8 +28,6 @@ export function TrayPopoverView() {
   }, []);
 
   // Poll runtime status
-  // Poll runtime status
-  const prevRuntimeStatusRef = useRef<Record<string, TunnelRuntimeStatus>>({});
   useEffect(() => {
     const handleStatusUpdate = (status: Record<string, TunnelRuntimeStatus>) => {
       setRuntimeStatus(prev => {
@@ -56,21 +54,6 @@ export function TrayPopoverView() {
             }
           }
         }
-
-        // Trigger sounds
-        const prevStatus = prevRuntimeStatusRef.current;
-        for (const id in merged) {
-          const curr = merged[id];
-          const prevEntry = prevStatus[id];
-          const currState = curr.state?.toLowerCase();
-          const prevState = prevEntry?.state?.toLowerCase();
-          if (currState === "connected" && prevState === "connecting") {
-            playConnectSound();
-          } else if (currState === "error" && (prevState === "connecting" || prevState === "connected")) {
-            playConnectFailedSound();
-          }
-        }
-        prevRuntimeStatusRef.current = merged;
         return merged;
       });
     };

@@ -27,6 +27,7 @@ export interface Tunnel {
   remark?: string | null;
   field_remarks?: Record<string, string>;
   auto_connect: boolean;
+  auto_reconnect?: boolean;
   is_general_config: boolean;
   use_alias: boolean;
   forwards: PortForwarding[];

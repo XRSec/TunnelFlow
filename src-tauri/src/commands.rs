@@ -35,11 +35,12 @@ pub fn save_tunnel(app: tauri::AppHandle, tunnel: Tunnel, state: State<'_, AppSt
 
     if let Ok(mut c_tunnels) = state.cached_tunnels.lock() {
         if let Some(pos) = c_tunnels.iter().position(|t| t.id == tunnel.id) {
-            c_tunnels[pos] = tunnel;
+            c_tunnels[pos] = tunnel.clone();
         } else {
-            c_tunnels.push(tunnel);
+            c_tunnels.push(tunnel.clone());
         }
     }
+    state.process_mgr.update_tunnel_config(&tunnel);
     let _ = crate::tray::update_tray_menu(&app);
     Ok(())
 }
@@ -158,13 +159,23 @@ pub fn play_system_sound(name: String) -> Result<(), String> {
     {
         let sound_name = match name.as_str() {
             "Pop" | "connected" => "Pop",
-            "Basso" | "disconnected" => "Basso",
+            "Bottle" | "disconnected" => "Bottle",
+            "Basso" | "error" | "failed" => "Basso",
             "Sosumi" | "conflict" => "Sosumi",
-            _ => "Pop",
+            "Tink" | "connecting" => "Tink",
+            "Ping" | "reconnecting" => "Ping",
+            other => other,
         };
-        let _ = std::process::Command::new("afplay")
-            .arg(format!("/System/Library/Sounds/{}.aiff", sound_name))
-            .spawn();
+        let sound_path = format!("/System/Library/Sounds/{}.aiff", sound_name);
+        if std::path::Path::new(&sound_path).exists() {
+            let _ = std::process::Command::new("afplay")
+                .arg(sound_path)
+                .spawn();
+        } else {
+            let _ = std::process::Command::new("afplay")
+                .arg("/System/Library/Sounds/Pop.aiff")
+                .spawn();
+        }
     }
     Ok(())
 }

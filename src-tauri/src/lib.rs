@@ -292,6 +292,7 @@ pub fn run() {
                     }
                 }
                 let _ = crate::tray::update_tray_menu(&app_handle);
+                state.process_mgr.start_supervisor(app_handle.clone());
             });
 
             Ok(())

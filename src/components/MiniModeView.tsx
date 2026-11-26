@@ -174,9 +174,9 @@ export function MiniModeView({
                     </div>
                     
                     {canOperate && <div className="shrink-0 ml-2">
-                        {state === "connected" ? <Button size="sm" variant="danger" className="h-6 px-2 text-[10px] rounded-md shadow-none" onClick={() => onStopTunnel(tunnelItem.id)}>
-                            <Square size={10} className="mr-1" />{t("auto_2004")}</Button> : <Button size="sm" variant="primary" className="h-6 px-2 text-[10px] rounded-md shadow-none bg-primary/90 hover:bg-primary" onClick={() => onStartTunnel(tunnelItem.id)} disabled={state === "connecting"}>
-                            {state === "connecting" ? <>{t("auto_2005")}</> : <><Play size={10} className="mr-1" />{t("auto_2006")}</>}
+                        {state === "connected" || state === "connecting" ? <Button size="sm" variant="danger" className="h-6 px-2 text-[10px] rounded-md shadow-none" onClick={() => onStopTunnel(tunnelItem.id)}>
+                            <Square size={10} className="mr-1" />{state === "connecting" ? t("common.cancel", "取消") : t("auto_2004")}</Button> : <Button size="sm" variant="primary" className="h-6 px-2 text-[10px] rounded-md shadow-none bg-primary/90 hover:bg-primary" onClick={() => onStartTunnel(tunnelItem.id)}>
+                            <Play size={10} className="mr-1" />{t("auto_2006")}
                           </Button>}
                       </div>}
                   </div>;

@@ -45,6 +45,8 @@ pub struct Tunnel {
     #[serde(default)]
     pub field_remarks: Option<HashMap<String, String>>,
     pub auto_connect: bool,
+    #[serde(default)]
+    pub auto_reconnect: Option<bool>,
     pub is_general_config: bool,
     pub use_alias: bool,
     pub forwards: Vec<PortForwarding>,

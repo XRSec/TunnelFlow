@@ -85,6 +85,7 @@ pub fn parse_ssh_config(content: &str) -> (Vec<Tunnel>, Vec<GroupDivider>) {
                 group: current_group.clone(),
                 remark: None,
                 auto_connect: false,
+                auto_reconnect: Some(true),
                 is_general_config: is_general,
                 use_alias: false,
                 forwards: Vec::new(),
@@ -145,6 +146,9 @@ pub fn parse_ssh_config(content: &str) -> (Vec<Tunnel>, Vec<GroupDivider>) {
                     }
                     if let Some(ac) = meta.get("autoConnect").and_then(|v| v.as_bool()) {
                         t.auto_connect = ac;
+                    }
+                    if let Some(ar) = meta.get("autoReconnect").and_then(|v| v.as_bool()) {
+                        t.auto_reconnect = Some(ar);
                     }
                     if let Some(ua) = meta.get("useAlias").and_then(|v| v.as_bool()) {
                         t.use_alias = ua;
@@ -380,6 +384,7 @@ pub fn parse_ssh_config(content: &str) -> (Vec<Tunnel>, Vec<GroupDivider>) {
                 group: None,
                 remark: None,
                 auto_connect: false,
+                auto_reconnect: Some(true),
                 is_general_config: true,
                 use_alias: false,
                 forwards: Vec::new(),
@@ -514,6 +519,7 @@ pub fn serialize_tunnel_block(tunnel: &Tunnel) -> String {
     let meta_json = serde_json::json!({
         "id": tunnel.id,
         "autoConnect": tunnel.auto_connect,
+        "autoReconnect": tunnel.auto_reconnect.unwrap_or(true),
         "useAlias": tunnel.use_alias,
         "remark": safe_remark.clone().unwrap_or_default(),
         "group": tunnel.group.clone().map(|g| g.replace('\n', " ").replace('\r', " ").trim().to_string()).unwrap_or_default()
